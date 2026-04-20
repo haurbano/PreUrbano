@@ -12,5 +12,5 @@
 
 ### Estudiantes
 
-- [ ] **Login con Google**
+- [x] **Login con Google**
   Autenticación OAuth2 con Google. Los estudiantes usan su cuenta Google para iniciar sesión, sin necesidad de registro manual.
