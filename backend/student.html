@@ -11,13 +11,18 @@
     :root {
       --bg: #0a0a0f; --surface: #111118; --border: rgba(255,255,255,0.07);
       --accent: #6c63ff; --text: #f0f0f5; --muted: #8888a0;
-      --green: #34d399;
+      --green: #34d399; --red: #f87171; --sidebar-w: 220px;
     }
     body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
 
-    nav {
+    /* ── Shell ── */
+    #app { display: none; height: 100vh; flex-direction: column; }
+    #app.visible { display: flex; }
+
+    topbar {
+      display: flex; align-items: center; justify-content: space-between;
       background: var(--surface); border-bottom: 1px solid var(--border);
-      padding: 16px 32px; display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 24px; flex-shrink: 0;
     }
     .logo { font-size: 1rem; font-weight: 700; display: flex; align-items: center; gap: 8px; }
     .logo-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
@@ -26,66 +31,185 @@
       border-radius: 8px; padding: 6px 14px; font-family: 'Inter', sans-serif;
       font-size: 0.82rem; cursor: pointer; transition: all 0.2s;
     }
-    .logout-btn:hover { border-color: rgba(248,113,113,0.5); color: #f87171; }
+    .logout-btn:hover { border-color: var(--red); color: var(--red); }
 
-    main {
-      max-width: 560px; margin: 80px auto; padding: 0 24px;
-      display: flex; flex-direction: column; align-items: center; text-align: center;
+    .body-wrap { display: flex; flex: 1; overflow: hidden; }
+
+    /* ── Sidebar ── */
+    sidebar {
+      width: var(--sidebar-w); flex-shrink: 0;
+      background: var(--surface); border-right: 1px solid var(--border);
+      padding: 24px 12px; display: flex; flex-direction: column; gap: 4px;
     }
 
-    .avatar {
-      width: 80px; height: 80px; border-radius: 50%;
-      border: 2px solid var(--border); margin-bottom: 20px; object-fit: cover;
+    /* Avatar en sidebar */
+    .sidebar-user {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 12px; margin-bottom: 12px;
+      border-bottom: 1px solid var(--border); padding-bottom: 16px;
     }
-    .avatar-placeholder {
-      width: 80px; height: 80px; border-radius: 50%;
-      background: var(--surface); border: 2px solid var(--border);
+    .sidebar-avatar {
+      width: 32px; height: 32px; border-radius: 50%; object-fit: cover;
+      border: 1px solid var(--border); flex-shrink: 0;
+    }
+    .sidebar-avatar-placeholder {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: rgba(108,99,255,0.15); border: 1px solid var(--border);
       display: flex; align-items: center; justify-content: center;
-      font-size: 2rem; margin-bottom: 20px;
+      font-size: 0.9rem; flex-shrink: 0;
     }
+    .sidebar-name { font-size: 0.82rem; font-weight: 600; color: var(--text); line-height: 1.2; }
+    .sidebar-email { font-size: 0.72rem; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 130px; }
 
-    h1 { font-size: 1.6rem; font-weight: 700; margin-bottom: 6px; }
-    .email { color: var(--muted); font-size: 0.9rem; margin-bottom: 32px; }
+    .nav-label {
+      font-size: 0.68rem; font-weight: 600; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 0.08em;
+      padding: 0 12px; margin-bottom: 6px; margin-top: 4px;
+    }
+    .nav-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 12px; border-radius: 10px; cursor: pointer;
+      font-size: 0.88rem; color: var(--muted); transition: all 0.15s;
+      border: none; background: transparent; font-family: 'Inter', sans-serif;
+      width: 100%; text-align: left;
+    }
+    .nav-item:hover { background: rgba(255,255,255,0.04); color: var(--text); }
+    .nav-item.active { background: rgba(108,99,255,0.12); color: var(--accent); }
+    .nav-item svg { flex-shrink: 0; opacity: 0.7; }
+    .nav-item.active svg { opacity: 1; }
 
-    .status-card {
+    /* ── Content ── */
+    .content { flex: 1; overflow-y: auto; padding: 36px 40px; }
+    .view { display: none; }
+    .view.active { display: block; }
+
+    /* ── Inicio ── */
+    .welcome-card {
       background: var(--surface); border: 1px solid var(--border);
-      border-radius: 16px; padding: 28px 32px; width: 100%;
+      border-radius: 16px; padding: 28px 32px; max-width: 520px;
     }
     .status-dot {
       display: inline-block; width: 8px; height: 8px; border-radius: 50%;
       background: var(--green); margin-right: 8px;
       box-shadow: 0 0 8px rgba(52,211,153,0.5);
     }
-    .status-label { font-size: 0.78rem; font-weight: 600; color: var(--green); text-transform: uppercase; letter-spacing: 0.08em; }
+    .status-label { font-size: 0.75rem; font-weight: 600; color: var(--green); text-transform: uppercase; letter-spacing: 0.08em; }
     .status-msg { font-size: 1rem; color: var(--text); margin-top: 12px; line-height: 1.6; }
     .status-sub { font-size: 0.82rem; color: var(--muted); margin-top: 8px; }
+
+    /* ── Perfil ── */
+    .profile-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 16px; padding: 28px 32px; max-width: 480px;
+    }
+    .profile-card h2 { font-size: 1rem; font-weight: 600; margin-bottom: 4px; }
+    .profile-card .sub { font-size: 0.82rem; color: var(--muted); margin-bottom: 24px; }
+
+    .form-field { margin-bottom: 18px; }
+    .form-field label { display: block; font-size: 0.78rem; color: var(--muted); margin-bottom: 6px; font-weight: 500; }
+    .form-field input {
+      width: 100%; background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+      border-radius: 10px; padding: 10px 14px; color: var(--text);
+      font-family: 'Inter', sans-serif; font-size: 0.92rem; outline: none; transition: border-color 0.2s;
+    }
+    .form-field input:focus { border-color: rgba(108,99,255,0.5); }
+    .form-field input:disabled { opacity: 0.45; cursor: not-allowed; }
+
+    .save-btn {
+      background: var(--accent); color: #fff; border: none;
+      border-radius: 10px; padding: 10px 24px; font-family: 'Inter', sans-serif;
+      font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: opacity 0.2s;
+    }
+    .save-btn:hover { opacity: 0.88; }
+    .save-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .form-msg { font-size: 0.82rem; margin-top: 12px; min-height: 18px; }
+    .form-msg.ok  { color: var(--green); }
+    .form-msg.err { color: var(--red); }
   </style>
 </head>
 <body>
 
-<nav>
-  <div class="logo"><div class="logo-dot"></div> PreUrbano</div>
-  <button class="logout-btn" onclick="logout()">Cerrar sesión</button>
-</nav>
+<div id="app">
+  <topbar>
+    <div class="logo"><div class="logo-dot"></div> PreUrbano</div>
+    <button class="logout-btn" onclick="logout()">Cerrar sesión</button>
+  </topbar>
 
-<main id="main" style="display:none">
-  <div id="avatar-wrap"></div>
-  <h1 id="name"></h1>
-  <div class="email" id="email"></div>
-  <div class="status-card">
-    <div><span class="status-dot"></span><span class="status-label">En lista de espera</span></div>
-    <p class="status-msg">Estás registrado. Te notificaremos en cuanto PreUrbano esté disponible.</p>
-    <p class="status-sub">Mientras tanto, comparte con tus compañeros de colegio 🚀</p>
+  <div class="body-wrap">
+    <sidebar>
+      <div class="sidebar-user">
+        <div id="sb-avatar"></div>
+        <div>
+          <div class="sidebar-name" id="sb-name"></div>
+          <div class="sidebar-email" id="sb-email"></div>
+        </div>
+      </div>
+
+      <div class="nav-label">Menú</div>
+      <button class="nav-item active" id="nav-inicio" onclick="switchView('inicio')">
+        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7m-9 2v8m4-8v8m-4 0h4"/>
+        </svg>
+        Inicio
+      </button>
+      <button class="nav-item" id="nav-perfil" onclick="switchView('perfil')">
+        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M5.121 17.804A9 9 0 1118.88 6.196M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+        </svg>
+        Mis datos
+      </button>
+    </sidebar>
+
+    <div class="content">
+
+      <!-- Vista: Inicio -->
+      <div class="view active" id="view-inicio">
+        <div class="welcome-card">
+          <div><span class="status-dot"></span><span class="status-label">En lista de espera</span></div>
+          <p class="status-msg">Estás registrado. Te notificaremos en cuanto PreUrbano esté disponible.</p>
+          <p class="status-sub">Mientras tanto, comparte con tus compañeros de colegio 🚀</p>
+        </div>
+      </div>
+
+      <!-- Vista: Mis datos -->
+      <div class="view" id="view-perfil">
+        <div class="profile-card">
+          <h2>Mis datos</h2>
+          <p class="sub">Esta información nos ayuda a personalizar tu experiencia.</p>
+
+          <div class="form-field">
+            <label>Correo electrónico</label>
+            <input type="email" id="field-email" disabled />
+          </div>
+          <div class="form-field">
+            <label>Nombre completo</label>
+            <input type="text" id="field-name" placeholder="Tu nombre completo" />
+          </div>
+          <div class="form-field">
+            <label>Documento de identidad</label>
+            <input type="text" id="field-document" placeholder="Número de documento" />
+          </div>
+          <div class="form-field">
+            <label>Teléfono de contacto</label>
+            <input type="tel" id="field-phone" placeholder="Ej. 3001234567" />
+          </div>
+
+          <button class="save-btn" id="save-btn" onclick="saveProfile()">Guardar cambios</button>
+          <div class="form-msg" id="profile-msg"></div>
+        </div>
+      </div>
+
+    </div>
   </div>
-</main>
+</div>
 
 <script>
   const TOKEN_KEY = 'pu_user_token';
+  let currentUser = null;
 
-  function parseJwt(token) {
-    try {
-      return JSON.parse(atob(token.split('.')[1]));
-    } catch { return null; }
+  function parseJwt(t) {
+    try { return JSON.parse(atob(t.split('.')[1])); } catch { return null; }
   }
 
   function logout() {
@@ -93,8 +217,71 @@
     window.location.href = '/';
   }
 
-  function init() {
-    // Capture token from URL after OAuth redirect
+  function switchView(view) {
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById('view-' + view).classList.add('active');
+    document.getElementById('nav-' + view).classList.add('active');
+  }
+
+  function renderUser(user) {
+    currentUser = user;
+
+    // Sidebar
+    document.getElementById('sb-name').textContent = user.name;
+    document.getElementById('sb-email').textContent = user.email;
+    const avEl = document.getElementById('sb-avatar');
+    avEl.innerHTML = user.picture
+      ? `<img class="sidebar-avatar" src="${user.picture}" referrerpolicy="no-referrer" />`
+      : `<div class="sidebar-avatar-placeholder">👤</div>`;
+
+    // Profile form
+    document.getElementById('field-email').value    = user.email;
+    document.getElementById('field-name').value     = user.name || '';
+    document.getElementById('field-document').value = user.document_id || '';
+    document.getElementById('field-phone').value    = user.phone || '';
+  }
+
+  async function saveProfile() {
+    const btn = document.getElementById('save-btn');
+    const msg = document.getElementById('profile-msg');
+    msg.textContent = ''; msg.className = 'form-msg';
+    btn.disabled = true; btn.textContent = 'Guardando…';
+
+    const body = {
+      name:        document.getElementById('field-name').value.trim(),
+      document_id: document.getElementById('field-document').value.trim() || null,
+      phone:       document.getElementById('field-phone').value.trim() || null,
+    };
+
+    if (!body.name) {
+      msg.textContent = 'El nombre es requerido.';
+      msg.className = 'form-msg err';
+      btn.disabled = false; btn.textContent = 'Guardar cambios';
+      return;
+    }
+
+    try {
+      const res = await fetch('/auth/profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem(TOKEN_KEY)}` },
+        body: JSON.stringify(body),
+      });
+      if (res.status === 401) { logout(); return; }
+      if (!res.ok) throw new Error();
+      const user = await res.json();
+      renderUser(user);
+      msg.textContent = 'Datos guardados correctamente.';
+      msg.className = 'form-msg ok';
+    } catch {
+      msg.textContent = 'Error al guardar. Intenta de nuevo.';
+      msg.className = 'form-msg err';
+    } finally {
+      btn.disabled = false; btn.textContent = 'Guardar cambios';
+    }
+  }
+
+  async function init() {
     const params = new URLSearchParams(window.location.search);
     const urlToken = params.get('token');
     if (urlToken) {
@@ -102,31 +289,18 @@
       history.replaceState({}, '', '/app');
     }
 
-    const token = localStorage.getItem(TOKEN_KEY);
-    if (!token) { window.location.href = '/'; return; }
+    const t = localStorage.getItem(TOKEN_KEY);
+    if (!t) { window.location.href = '/'; return; }
 
-    const payload = parseJwt(token);
-    if (!payload || payload.exp * 1000 < Date.now()) {
-      logout();
-      return;
-    }
+    const payload = parseJwt(t);
+    if (!payload || payload.exp * 1000 < Date.now()) { logout(); return; }
 
-    // Fetch full profile from API
-    fetch('/auth/me', { headers: { Authorization: `Bearer ${token}` } })
-      .then(r => r.ok ? r.json() : null)
-      .then(user => {
-        if (!user) { logout(); return; }
-        document.getElementById('name').textContent = user.name;
-        document.getElementById('email').textContent = user.email;
-        const wrap = document.getElementById('avatar-wrap');
-        if (user.picture) {
-          wrap.innerHTML = `<img class="avatar" src="${user.picture}" alt="${user.name}" referrerpolicy="no-referrer" />`;
-        } else {
-          wrap.innerHTML = `<div class="avatar-placeholder">👤</div>`;
-        }
-        document.getElementById('main').style.display = 'flex';
-      })
-      .catch(logout);
+    try {
+      const res = await fetch('/auth/me', { headers: { Authorization: `Bearer ${t}` } });
+      if (!res.ok) { logout(); return; }
+      renderUser(await res.json());
+      document.getElementById('app').classList.add('visible');
+    } catch { logout(); }
   }
 
   init();

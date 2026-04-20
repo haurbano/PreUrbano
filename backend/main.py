@@ -19,7 +19,7 @@ origins = os.getenv("CORS_ORIGINS", "https://preurbano.com").split(",")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
-    allow_methods=["GET", "POST"],
+    allow_methods=["GET", "POST", "PUT"],
     allow_headers=["Authorization", "Content-Type"],
 )
 

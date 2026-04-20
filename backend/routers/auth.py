@@ -5,7 +5,7 @@ from authlib.integrations.httpx_client import AsyncOAuth2Client
 from database import SessionLocal
 from models import User
 from auth import create_user_token, verify_user_token
-from schemas import UserOut
+from schemas import UserOut, UserProfileUpdate
 
 router = APIRouter()
 
@@ -79,6 +79,24 @@ async def me(token_data: dict = Depends(verify_user_token)):
         if not user:
             from fastapi import HTTPException
             raise HTTPException(status_code=404, detail="Usuario no encontrado")
+        return user
+    finally:
+        db.close()
+
+
+@router.put("/profile", response_model=UserOut)
+async def update_profile(body: UserProfileUpdate, token_data: dict = Depends(verify_user_token)):
+    from fastapi import HTTPException
+    db = SessionLocal()
+    try:
+        user = db.query(User).filter(User.id == int(token_data["sub"])).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="Usuario no encontrado")
+        user.name = body.name.strip()
+        user.document_id = body.document_id.strip() if body.document_id else None
+        user.phone = body.phone.strip() if body.phone else None
+        db.commit()
+        db.refresh(user)
         return user
     finally:
         db.close()
