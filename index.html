@@ -697,7 +697,7 @@
   setInterval(updateCountdown, 1000);
 
   // Email submit helpers
-  function submitEmail(inputId, formRowId, successId) {
+  async function submitEmail(inputId, formRowId, successId, source) {
     const input = document.getElementById(inputId);
     const email = input.value.trim();
     const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -706,13 +706,24 @@
       setTimeout(() => input.style.outline = '', 1500);
       return;
     }
+    try {
+      const res = await fetch('/api/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, source }),
+      });
+      if (!res.ok && res.status !== 409) throw new Error();
+    } catch {
+      input.style.outline = '2px solid #f87171';
+      setTimeout(() => input.style.outline = '', 1500);
+      return;
+    }
     document.getElementById(formRowId).style.display = 'none';
-    const msg = document.getElementById(successId);
-    msg.style.display = 'flex';
+    document.getElementById(successId).style.display = 'flex';
   }
 
-  function handleSubmit()    { submitEmail('emailInput',    'formRow',    'successMsg'); }
-  function handleCtaSubmit() { submitEmail('ctaEmailInput', 'ctaFormRow', 'ctaSuccessMsg'); }
+  function handleSubmit()    { submitEmail('emailInput',    'formRow',    'successMsg',    'hero'); }
+  function handleCtaSubmit() { submitEmail('ctaEmailInput', 'ctaFormRow', 'ctaSuccessMsg', 'cta');  }
 
   // Scroll animations
   const observer = new IntersectionObserver((entries) => {
