@@ -156,7 +156,7 @@
     const err = document.getElementById('login-error');
     err.textContent = '';
     try {
-      const res = await fetch('/admin/login', {
+      const res = await fetch('/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ password: pwd }),
@@ -187,7 +187,7 @@
     const wrap = document.getElementById('table-wrap');
     wrap.innerHTML = '<p style="color:var(--muted);padding:16px">Cargando...</p>';
     try {
-      const res = await fetch('/admin/subscribers', {
+      const res = await fetch('/subscribers', {
         headers: { Authorization: `Bearer ${token()}` },
       });
       if (res.status === 401) { logout(); return; }
