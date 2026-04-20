@@ -125,6 +125,16 @@
       color: var(--muted);
       background: rgba(255,255,255,0.03);
     }
+    .nav-right { display: flex; align-items: center; gap: 12px; }
+    .btn-google {
+      display: flex; align-items: center; gap: 8px;
+      background: rgba(255,255,255,0.06); border: 1px solid var(--border);
+      color: var(--text); border-radius: 100px; padding: 6px 16px 6px 10px;
+      font-family: 'Inter', sans-serif; font-size: 0.82rem; font-weight: 500;
+      cursor: pointer; text-decoration: none; transition: all 0.2s;
+    }
+    .btn-google:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.15); }
+    .btn-google svg { flex-shrink: 0; }
 
     /* ── Hero ── */
     .hero {
@@ -493,7 +503,18 @@
       <div class="logo-dot"></div>
       PreUrbano
     </div>
-    <div class="badge">Próximamente</div>
+    <div class="nav-right">
+      <div class="badge">Próximamente</div>
+      <a href="/auth/google/login" class="btn-google">
+        <svg width="16" height="16" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M43.6 20.5H42V20.4H24V27.6H35.2C33.6 32 29.2 35.2 24 35.2C17.4 35.2 12 29.8 12 23.2C12 16.6 17.4 11.2 24 11.2C27.1 11.2 29.9 12.4 32 14.3L37.1 9.2C33.8 6.2 29.1 4.4 24 4.4C13.5 4.4 5 12.9 5 23.4C5 33.9 13.5 42.4 24 42.4C34.5 42.4 43 33.9 43 23.4C43 22.4 42.9 21.4 42.7 20.5H43.6Z" fill="#FFC107"/>
+          <path d="M6.3 14.7L12.3 19C13.9 14.9 18.6 12 24 12C27.1 12 29.9 13.2 32 15.1L37.1 10C33.8 7 29.1 5.2 24 5.2C16.3 5.2 9.7 9.2 6.3 14.7Z" fill="#FF3D00"/>
+          <path d="M24 43.2C29 43.2 33.6 41.5 37.2 38.6L31.6 33.8C29.6 35.3 27 36.2 24 36.2C18.8 36.2 14.4 33 12.8 28.6L6.8 33.8C10.1 39.3 16.6 43.2 24 43.2Z" fill="#4CAF50"/>
+          <path d="M43.6 20.5H42V20.4H24V27.6H35.2C34.4 30 33 32.1 31.6 33.8L37.2 38.6C36.8 38.9 43 34.2 43 23.4C43 22.4 42.9 21.4 42.7 20.5H43.6Z" fill="#1976D2"/>
+        </svg>
+        Iniciar sesión
+      </a>
+    </div>
   </div>
 </nav>
 

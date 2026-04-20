@@ -7,6 +7,9 @@ services:
       - JWT_SECRET=${JWT_SECRET}
       - CORS_ORIGINS=${CORS_ORIGINS:-https://preurbano.com}
       - DATABASE_URL=sqlite:////app/data/db.sqlite
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - APP_BASE_URL=${APP_BASE_URL:-https://preurbano.com}
     volumes:
       - ./data:/app/data
     networks:

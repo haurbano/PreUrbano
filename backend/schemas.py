@@ -37,3 +37,14 @@ class LoginRequest(BaseModel):
 
 class TokenResponse(BaseModel):
     access_token: str
+
+
+class UserOut(BaseModel):
+    id: int
+    email: str
+    name: str
+    picture: str | None
+    is_active: bool
+    created_at: datetime
+
+    model_config = {"from_attributes": True}

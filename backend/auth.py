@@ -28,3 +28,24 @@ def verify_token(credentials: HTTPAuthorizationCredentials = Security(bearer)) -
         raise HTTPException(status_code=401, detail="Token expirado")
     except jwt.InvalidTokenError:
         raise HTTPException(status_code=401, detail="Token inválido")
+
+
+def create_user_token(user_id: int, email: str) -> str:
+    payload = {
+        "sub": str(user_id),
+        "email": email,
+        "exp": datetime.now(timezone.utc) + timedelta(hours=EXPIRY_HOURS),
+    }
+    return jwt.encode(payload, SECRET, algorithm=ALGORITHM)
+
+
+def verify_user_token(credentials: HTTPAuthorizationCredentials = Security(bearer)) -> dict:
+    try:
+        data = jwt.decode(credentials.credentials, SECRET, algorithms=[ALGORITHM])
+        if data.get("sub") == "admin":
+            raise HTTPException(status_code=401, detail="Token inválido")
+        return data
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Token expirado")
+    except jwt.InvalidTokenError:
+        raise HTTPException(status_code=401, detail="Token inválido")
