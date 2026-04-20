@@ -25,7 +25,7 @@ app.add_middleware(
 
 app.include_router(subscribe.router, prefix="/api")
 app.include_router(admin.router, prefix="/admin")
-app.include_router(auth_router.router, prefix="/auth/google")
+app.include_router(auth_router.router, prefix="/auth")
 
 
 _student_html_path = Path(__file__).parent / "student.html"
