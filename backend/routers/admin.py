@@ -3,8 +3,8 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import HTMLResponse
 from sqlalchemy.orm import Session
 from database import get_db
-from models import Subscriber
-from schemas import LoginRequest, TokenResponse, SubscriberOut
+from models import Subscriber, User
+from schemas import LoginRequest, TokenResponse, SubscriberOut, UserOut
 from auth import create_token, verify_token, ADMIN_PASSWORD
 
 router = APIRouter()
@@ -39,3 +39,11 @@ def list_subscribers(
     _: str = Depends(verify_token),
 ):
     return db.query(Subscriber).order_by(Subscriber.created_at.desc()).all()
+
+
+@router.get("/users", response_model=list[UserOut])
+def list_users(
+    db: Session = Depends(get_db),
+    _: str = Depends(verify_token),
+):
+    return db.query(User).order_by(User.created_at.desc()).all()
