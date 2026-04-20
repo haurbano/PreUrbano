@@ -130,6 +130,46 @@
 
     .view { display: none; }
     .view.active { display: block; }
+
+    tbody tr.clickable { cursor: pointer; }
+
+    /* ── Modal ── */
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 200; backdrop-filter: blur(4px);
+    }
+    .modal-overlay.hidden { display: none; }
+    .modal {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 20px; padding: 32px; width: 100%; max-width: 440px;
+      position: relative;
+    }
+    .modal-close {
+      position: absolute; top: 16px; right: 16px;
+      background: transparent; border: none; color: var(--muted);
+      font-size: 1.2rem; cursor: pointer; line-height: 1;
+      padding: 4px 8px; border-radius: 6px; transition: color 0.15s;
+    }
+    .modal-close:hover { color: var(--text); }
+    .modal-header { display: flex; align-items: center; gap: 14px; margin-bottom: 24px; }
+    .modal-avatar {
+      width: 52px; height: 52px; border-radius: 50%; object-fit: cover;
+      border: 2px solid var(--border); flex-shrink: 0;
+    }
+    .modal-avatar-placeholder {
+      width: 52px; height: 52px; border-radius: 50%;
+      background: rgba(108,99,255,0.15); border: 2px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.4rem; flex-shrink: 0;
+    }
+    .modal-name { font-size: 1rem; font-weight: 700; }
+    .modal-email { font-size: 0.82rem; color: var(--muted); margin-top: 2px; }
+    .modal-fields { display: flex; flex-direction: column; gap: 12px; }
+    .modal-field { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: rgba(255,255,255,0.03); border-radius: 10px; }
+    .modal-field .lbl { font-size: 0.75rem; color: var(--muted); }
+    .modal-field .val { font-size: 0.88rem; font-weight: 500; }
+    .val-empty { color: var(--muted); font-style: italic; font-weight: 400 !important; }
   </style>
 </head>
 <body>
@@ -145,6 +185,26 @@
     </div>
     <button class="btn" onclick="login()">Ingresar</button>
     <div class="error-msg" id="login-error"></div>
+  </div>
+</div>
+
+<!-- User detail modal -->
+<div class="modal-overlay hidden" id="user-modal" onclick="closeModal(event)">
+  <div class="modal">
+    <button class="modal-close" onclick="document.getElementById('user-modal').classList.add('hidden')">✕</button>
+    <div class="modal-header">
+      <div id="modal-avatar"></div>
+      <div>
+        <div class="modal-name" id="modal-name"></div>
+        <div class="modal-email" id="modal-email"></div>
+      </div>
+    </div>
+    <div class="modal-fields">
+      <div class="modal-field"><span class="lbl">Documento</span><span class="val" id="modal-document"></span></div>
+      <div class="modal-field"><span class="lbl">Teléfono</span><span class="val" id="modal-phone"></span></div>
+      <div class="modal-field"><span class="lbl">Estado</span><span class="val" id="modal-status"></span></div>
+      <div class="modal-field"><span class="lbl">Registro</span><span class="val" id="modal-created"></span></div>
+    </div>
   </div>
 </div>
 
@@ -315,7 +375,7 @@
         <table>
           <thead><tr><th>#</th><th>Usuario</th><th>Email</th><th>Estado</th><th>Registro</th></tr></thead>
           <tbody>${data.map((u, i) => `
-            <tr>
+            <tr class="clickable" onclick='openUserModal(${JSON.stringify(u)})'>
               <td style="color:var(--muted)">${i + 1}</td>
               <td>
                 ${u.picture ? `<img class="user-avatar" src="${u.picture}" referrerpolicy="no-referrer" />` : ''}
@@ -328,6 +388,25 @@
           </tbody>
         </table>`;
     } catch { wrap.innerHTML = '<p style="color:var(--red);padding:16px">Error al cargar datos.</p>'; }
+  }
+
+  function openUserModal(u) {
+    const empty = '<span class="val-empty">Sin completar</span>';
+    document.getElementById('modal-avatar').innerHTML = u.picture
+      ? `<img class="modal-avatar" src="${u.picture}" referrerpolicy="no-referrer" />`
+      : `<div class="modal-avatar-placeholder">👤</div>`;
+    document.getElementById('modal-name').textContent    = u.name;
+    document.getElementById('modal-email').textContent   = u.email;
+    document.getElementById('modal-document').innerHTML  = u.document_id || empty;
+    document.getElementById('modal-phone').innerHTML     = u.phone || empty;
+    document.getElementById('modal-status').innerHTML    = `<span class="badge ${u.is_active ? 'badge-active' : 'badge-off'}">${u.is_active ? 'activo' : 'inactivo'}</span>`;
+    document.getElementById('modal-created').textContent = new Date(u.created_at).toLocaleString('es-CO');
+    document.getElementById('user-modal').classList.remove('hidden');
+  }
+
+  function closeModal(e) {
+    if (e.target === document.getElementById('user-modal'))
+      document.getElementById('user-modal').classList.add('hidden');
   }
 
   if (token()) showDashboard();
