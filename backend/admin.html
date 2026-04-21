@@ -1049,11 +1049,17 @@
         body: JSON.stringify(body),
       });
       if (res.status === 401) { logout(); return; }
-      if (!res.ok) throw new Error();
+      if (!res.ok) {
+        const errText = await res.text();
+        msg.textContent = 'Error al guardar: ' + errText;
+        msg.className = 'form-msg err';
+        btn.disabled = false; btn.textContent = 'Guardar configuración';
+        return;
+      }
       msg.textContent = 'Configuración guardada.';
       msg.className = 'form-msg ok';
-    } catch {
-      msg.textContent = 'Error al guardar.';
+    } catch (e) {
+      msg.textContent = 'Error de conexión: ' + e.message;
       msg.className = 'form-msg err';
     } finally {
       btn.disabled = false; btn.textContent = 'Guardar configuración';
