@@ -4,7 +4,7 @@ from fastapi.responses import HTMLResponse
 from sqlalchemy.orm import Session
 from database import get_db
 from models import Subscriber, User
-from schemas import LoginRequest, TokenResponse, SubscriberOut, UserOut
+from schemas import LoginRequest, TokenResponse, SubscriberOut, UserOut, UserEnableUpdate
 from auth import create_token, verify_token, ADMIN_PASSWORD
 
 router = APIRouter()
@@ -47,3 +47,19 @@ def list_users(
     _: str = Depends(verify_token),
 ):
     return db.query(User).order_by(User.created_at.desc()).all()
+
+
+@router.patch("/users/{user_id}", response_model=UserOut)
+def update_user(
+    user_id: int,
+    body: UserEnableUpdate,
+    db: Session = Depends(get_db),
+    _: str = Depends(verify_token),
+):
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    user.is_active = body.is_active
+    db.commit()
+    db.refresh(user)
+    return user

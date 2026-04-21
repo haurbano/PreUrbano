@@ -60,7 +60,7 @@ async def google_callback(request: Request, code: str, state: str):
             user.name = name
             user.picture = picture
         else:
-            user = User(google_id=google_id, email=email, name=name, picture=picture)
+            user = User(google_id=google_id, email=email, name=name, picture=picture, is_active=False)
             db.add(user)
         db.commit()
         db.refresh(user)

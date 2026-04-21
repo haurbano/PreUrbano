@@ -71,3 +71,7 @@ class QuestionOut(BaseModel):
 class QuestionUpdate(BaseModel):
     subject: str | None = None
     correct_option: str | None = None
+
+
+class UserEnableUpdate(BaseModel):
+    is_active: bool

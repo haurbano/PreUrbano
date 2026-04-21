@@ -3,6 +3,8 @@ import jwt
 from datetime import datetime, timedelta, timezone
 from fastapi import Cookie, HTTPException, Security
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from database import SessionLocal
+from models import User
 
 SECRET = os.getenv("JWT_SECRET")
 if not SECRET:
@@ -50,6 +52,13 @@ def verify_user_token_cookie(pu_auth: str | None = Cookie(default=None)) -> dict
         data = jwt.decode(pu_auth, SECRET, algorithms=[ALGORITHM])
         if data.get("sub") == "admin":
             raise HTTPException(status_code=401, detail="Token inválido")
+        db = SessionLocal()
+        try:
+            user = db.query(User).filter(User.id == int(data["sub"])).first()
+            if not user or not user.is_active:
+                raise HTTPException(status_code=403, detail="Cuenta desactivada")
+        finally:
+            db.close()
         return data
     except jwt.ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="Token expirado")

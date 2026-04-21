@@ -126,9 +126,34 @@
     .form-msg { font-size: 0.82rem; margin-top: 12px; min-height: 18px; }
     .form-msg.ok  { color: var(--green); }
     .form-msg.err { color: var(--red); }
+
+    /* ── Deactivated screen ── */
+    #deactivated {
+      display: none;
+      position: fixed; inset: 0; background: var(--bg);
+      flex-direction: column; align-items: center; justify-content: center;
+      text-align: center; padding: 32px; z-index: 999;
+    }
+    #deactivated.visible { display: flex; }
+    #deactivated .d-icon { font-size: 3.5rem; margin-bottom: 20px; }
+    #deactivated .d-title { font-size: 1.3rem; font-weight: 700; margin-bottom: 12px; }
+    #deactivated .d-msg { color: var(--muted); font-size: 0.92rem; max-width: 360px; line-height: 1.7; margin-bottom: 28px; }
+    #deactivated .d-btn {
+      background: transparent; border: 1px solid var(--border); color: var(--muted);
+      border-radius: 8px; padding: 9px 22px; font-family: 'Inter', sans-serif;
+      font-size: 0.88rem; cursor: pointer; transition: all 0.2s;
+    }
+    #deactivated .d-btn:hover { border-color: var(--red); color: var(--red); }
   </style>
 </head>
 <body>
+
+<div id="deactivated">
+  <div class="d-icon">🔒</div>
+  <div class="d-title">Cuenta desactivada</div>
+  <p class="d-msg">Tu cuenta aún no ha sido activada. Contacta al equipo de PreUrbano para más información.</p>
+  <button class="d-btn" onclick="logout()">Cerrar sesión</button>
+</div>
 
 <div id="app">
   <topbar>
@@ -152,6 +177,12 @@
           <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7m-9 2v8m4-8v8m-4 0h4"/>
         </svg>
         Inicio
+      </button>
+      <button class="nav-item" id="nav-simulacro" onclick="switchView('simulacro')">
+        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
+        </svg>
+        Simulacro
       </button>
       <button class="nav-item" id="nav-perfil" onclick="switchView('perfil')">
         <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
@@ -197,6 +228,15 @@
 
           <button class="save-btn" id="save-btn" onclick="saveProfile()">Guardar cambios</button>
           <div class="form-msg" id="profile-msg"></div>
+        </div>
+      </div>
+
+      <!-- Vista: Simulacro -->
+      <div class="view" id="view-simulacro">
+        <div class="welcome-card">
+          <div><span class="status-dot"></span><span class="status-label">Simulacro ICFES</span></div>
+          <p class="status-msg">Esta funcionalidad estará disponible muy pronto.</p>
+          <p class="status-sub">Prepárate para el examen con preguntas de práctica 📚</p>
         </div>
       </div>
 
@@ -276,14 +316,21 @@
   }
 
   async function init() {
-    // Clean up any legacy token left in localStorage
     localStorage.removeItem('pu_user_token');
 
     try {
       const res = await fetch('/auth/me');
+      if (res.status === 403) {
+        document.getElementById('deactivated').classList.add('visible');
+        return;
+      }
       if (!res.ok) { window.location.href = '/'; return; }
-      renderUser(await res.json());
+      const user = await res.json();
+      renderUser(user);
       document.getElementById('app').classList.add('visible');
+      if (!user.is_active) {
+        document.getElementById('nav-simulacro').style.display = 'none';
+      }
     } catch { window.location.href = '/'; }
   }
 
