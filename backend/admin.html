@@ -277,6 +277,13 @@
     }
     .action-btn.del:hover { border-color: var(--red); color: var(--red); }
 
+    .edit-select {
+      background: rgba(255,255,255,0.04); border: 1px solid var(--border); color: var(--text);
+      border-radius: 10px; padding: 9px 12px; font-family: 'Inter', sans-serif;
+      font-size: 0.88rem; cursor: pointer; outline: none; min-width: 160px;
+    }
+    .edit-select:focus { border-color: rgba(108,99,255,0.5); }
+
     /* Question detail page */
     .detail-back {
       display: inline-flex; align-items: center; gap: 6px;
@@ -730,33 +737,37 @@
 
     document.getElementById('detail-meta').innerHTML =
       `<span class="badge badge-${q.subject}">${subjectLabel(q.subject)}</span>` +
-      `<span class="badge badge-option">Respuesta: ${q.correct_option}</span>`;
+      `<span class="badge badge-option">Respuesta correcta: ${q.correct_option}</span>`;
 
-    const img = document.getElementById('detail-image');
-    img.src = `/uploads/${q.image_path}`;
-    img.style.display = 'block';
-
-    document.getElementById('detail-stem').style.display = 'none';
-    document.getElementById('detail-options').style.display = 'none';
-    document.getElementById('detail-explanation').style.display = 'none';
+    document.getElementById('detail-image').src = `/uploads/${q.image_path}`;
 
     document.getElementById('detail-actions').innerHTML = `
-      <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
-        <select id="edit-subject" style="background:rgba(255,255,255,0.04);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:9px 12px;font-family:Inter,sans-serif;font-size:0.88rem;cursor:pointer;outline:none">
-          <option value="matematicas"${q.subject==='matematicas'?' selected':''}>Matemáticas</option>
-          <option value="ciencias_naturales"${q.subject==='ciencias_naturales'?' selected':''}>Ciencias Naturales</option>
-          <option value="lectura_critica"${q.subject==='lectura_critica'?' selected':''}>Lectura Crítica</option>
-          <option value="sociales"${q.subject==='sociales'?' selected':''}>Sociales</option>
-          <option value="ingles"${q.subject==='ingles'?' selected':''}>Inglés</option>
-        </select>
-        <select id="edit-correct" style="background:rgba(255,255,255,0.04);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:9px 12px;font-family:Inter,sans-serif;font-size:0.88rem;cursor:pointer;outline:none">
-          <option${q.correct_option==='A'?' selected':''}>A</option>
-          <option${q.correct_option==='B'?' selected':''}>B</option>
-          <option${q.correct_option==='C'?' selected':''}>C</option>
-          <option${q.correct_option==='D'?' selected':''}>D</option>
-        </select>
-        <button class="detail-btn approve" onclick="saveQuestionEdit(${q.id})">Guardar cambios</button>
-        <button class="detail-btn del" onclick="deleteQuestionFromDetail(${q.id})">🗑 Eliminar</button>
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">
+          <div>
+            <div style="font-size:0.72rem;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em">Materia</div>
+            <select id="edit-subject" class="edit-select">
+              <option value="matematicas"     ${q.subject==='matematicas'      ?'selected':''}>Matemáticas</option>
+              <option value="ciencias_naturales" ${q.subject==='ciencias_naturales'?'selected':''}>Ciencias Naturales</option>
+              <option value="lectura_critica" ${q.subject==='lectura_critica'  ?'selected':''}>Lectura Crítica</option>
+              <option value="sociales"        ${q.subject==='sociales'         ?'selected':''}>Sociales</option>
+              <option value="ingles"          ${q.subject==='ingles'           ?'selected':''}>Inglés</option>
+            </select>
+          </div>
+          <div>
+            <div style="font-size:0.72rem;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em">Respuesta correcta</div>
+            <select id="edit-correct" class="edit-select">
+              <option ${q.correct_option==='A'?'selected':''}>A</option>
+              <option ${q.correct_option==='B'?'selected':''}>B</option>
+              <option ${q.correct_option==='C'?'selected':''}>C</option>
+              <option ${q.correct_option==='D'?'selected':''}>D</option>
+            </select>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px">
+          <button class="detail-btn approve" onclick="saveQuestionEdit(${q.id})">Guardar cambios</button>
+          <button class="detail-btn del" onclick="deleteQuestionFromDetail(${q.id})">🗑 Eliminar</button>
+        </div>
       </div>`;
 
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
@@ -785,7 +796,8 @@
       _detailQuestion = updated;
       document.getElementById('detail-meta').innerHTML =
         `<span class="badge badge-${updated.subject}">${subjectLabel(updated.subject)}</span>` +
-        `<span class="badge badge-option">Respuesta: ${updated.correct_option}</span>`;
+        `<span class="badge badge-option">Respuesta correcta: ${updated.correct_option}</span>`;
+      showToast('✓ Cambios guardados');
     } catch { alert('Error de conexión.'); }
   }
 
