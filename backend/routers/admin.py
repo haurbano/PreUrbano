@@ -1,6 +1,6 @@
-import os
+from pathlib import Path
 from fastapi import APIRouter, Depends, HTTPException, Query
-from fastapi.responses import HTMLResponse
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from database import get_db
 from models import Subscriber, User, SimulationConfig, SimulationResult
@@ -19,21 +19,12 @@ from auth import create_token, verify_token, ADMIN_PASSWORD
 
 router = APIRouter()
 
-_admin_html: str | None = None
+_admin_html_path = Path(__file__).parent.parent / "admin.html"
 
 
-def _load_admin_html() -> str:
-    global _admin_html
-    if _admin_html is None:
-        path = os.path.join(os.path.dirname(__file__), "..", "admin.html")
-        with open(path, encoding="utf-8") as f:
-            _admin_html = f.read()
-    return _admin_html
-
-
-@router.get("/", response_class=HTMLResponse)
+@router.get("/", response_class=FileResponse)
 def admin_ui():
-    return _load_admin_html()
+    return FileResponse(_admin_html_path, media_type="text/html")
 
 
 @router.post("/login", response_model=TokenResponse)

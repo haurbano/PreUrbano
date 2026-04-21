@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 from fastapi import FastAPI
-from fastapi.responses import HTMLResponse
+from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
@@ -39,9 +39,13 @@ _uploads_path = Path("/app/uploads")
 _uploads_path.mkdir(parents=True, exist_ok=True)
 app.mount("/uploads", StaticFiles(directory=str(_uploads_path)), name="uploads")
 
+# Serve split CSS/JS assets for admin and student SPAs
+_static_path = Path(__file__).parent / "static"
+app.mount("/static", StaticFiles(directory=str(_static_path)), name="static")
+
 _student_html_path = Path(__file__).parent / "student.html"
 
 
-@app.get("/app", response_class=HTMLResponse)
+@app.get("/app", response_class=FileResponse)
 async def student_app():
-    return _student_html_path.read_text(encoding="utf-8")
+    return FileResponse(_student_html_path, media_type="text/html")
