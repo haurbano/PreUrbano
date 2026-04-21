@@ -1,6 +1,7 @@
 import uuid
 from pathlib import Path
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, Query
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from database import get_db
 from models import Question
@@ -50,16 +51,33 @@ async def create_question(
     return question
 
 
-@router.get("/questions", response_model=list[QuestionOut])
+PAGE_SIZE = 20
+
+
+class QuestionsPage(BaseModel):
+    items: list[QuestionOut]
+    total: int
+    page: int
+    page_size: int
+    pages: int
+
+    model_config = {"from_attributes": True}
+
+
+@router.get("/questions", response_model=QuestionsPage)
 def list_questions(
     subject: str | None = Query(None),
+    page: int = Query(1, ge=1),
     db: Session = Depends(get_db),
     _: str = Depends(verify_token),
 ):
     q = db.query(Question)
     if subject:
         q = q.filter(Question.subject == subject)
-    return q.order_by(Question.created_at.desc()).all()
+    total = q.count()
+    pages = max(1, -(-total // PAGE_SIZE))  # ceiling division
+    items = q.order_by(Question.created_at.desc()).offset((page - 1) * PAGE_SIZE).limit(PAGE_SIZE).all()
+    return QuestionsPage(items=items, total=total, page=page, page_size=PAGE_SIZE, pages=pages)
 
 
 @router.patch("/questions/{question_id}", response_model=QuestionOut)

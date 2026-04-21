@@ -231,6 +231,20 @@
       font-weight: 700;
     }
 
+    /* Pagination */
+    .pagination {
+      display: flex; align-items: center; gap: 6px; margin-top: 20px; flex-wrap: wrap;
+    }
+    .page-btn {
+      background: transparent; border: 1px solid var(--border); color: var(--muted);
+      border-radius: 8px; padding: 5px 12px; font-family: 'Inter', sans-serif;
+      font-size: 0.82rem; cursor: pointer; transition: all 0.15s; min-width: 34px;
+    }
+    .page-btn:hover:not(:disabled) { border-color: var(--accent); color: var(--text); }
+    .page-btn.active { background: rgba(108,99,255,0.18); border-color: var(--accent); color: var(--accent); }
+    .page-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+    .page-info { font-size: 0.8rem; color: var(--muted); margin-left: 6px; }
+
     /* Filter row */
     .filter-row { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
     .filter-row select {
@@ -472,7 +486,7 @@
 
         <!-- Filtro + tabla -->
         <div class="filter-row">
-          <select id="filter-subject" onchange="loadQuestions()">
+          <select id="filter-subject" onchange="loadQuestions(1)">
             <option value="">Todas las materias</option>
             <option value="matematicas">Matemáticas</option>
             <option value="ciencias_naturales">Ciencias Naturales</option>
@@ -624,36 +638,61 @@
   }
 
   /* ── API: Load questions ── */
-  async function loadQuestions() {
+  let _currentPage = 1;
+
+  async function loadQuestions(page) {
+    if (page !== undefined) _currentPage = page;
     const wrap = document.getElementById('table-questions');
     if (!wrap) return;
     wrap.innerHTML = '<p style="color:var(--muted);padding:16px">Cargando…</p>';
     const subject = document.getElementById('filter-subject')?.value || '';
-    const qs = subject ? `?subject=${subject}` : '';
+    const params = new URLSearchParams({ page: _currentPage });
+    if (subject) params.set('subject', subject);
     try {
-      const res = await fetch('/questions' + qs, { headers: { Authorization: `Bearer ${token()}` } });
+      const res = await fetch('/questions?' + params, { headers: { Authorization: `Bearer ${token()}` } });
       if (res.status === 401) { logout(); return; }
       const data = await res.json();
-      if (!data.length) {
+      if (!data.total) {
         wrap.innerHTML = '<div class="empty-state">No hay preguntas aún.</div>';
         return;
       }
+      const rows = data.items.map(q => `
+        <tr class="clickable" onclick="handleQuestionRowClick(event, ${JSON.stringify(q).replace(/"/g, '&quot;')})">
+          <td><img class="q-thumb" src="/uploads/${q.image_path}" /></td>
+          <td><span class="badge badge-${q.subject}">${subjectLabel(q.subject)}</span></td>
+          <td><span class="badge badge-option">${q.correct_option}</span></td>
+          <td style="color:var(--muted)">${new Date(q.created_at).toLocaleDateString('es-CO')}</td>
+          <td onclick="event.stopPropagation()">
+            <button class="action-btn del" onclick="deleteQuestion(${q.id})">🗑</button>
+          </td>
+        </tr>`).join('');
+
+      const paginationHtml = buildPagination(data.page, data.pages, data.total, data.page_size);
+
       wrap.innerHTML = `
         <table>
           <thead><tr><th></th><th>Materia</th><th>Respuesta</th><th>Fecha</th><th>Acciones</th></tr></thead>
-          <tbody>${data.map(q => `
-            <tr class="clickable" onclick="handleQuestionRowClick(event, ${JSON.stringify(q).replace(/"/g, '&quot;')})">
-              <td><img class="q-thumb" src="/uploads/${q.image_path}" /></td>
-              <td><span class="badge badge-${q.subject}">${subjectLabel(q.subject)}</span></td>
-              <td><span class="badge badge-option">${q.correct_option}</span></td>
-              <td style="color:var(--muted)">${new Date(q.created_at).toLocaleDateString('es-CO')}</td>
-              <td onclick="event.stopPropagation()">
-                <button class="action-btn del" onclick="deleteQuestion(${q.id})">🗑</button>
-              </td>
-            </tr>`).join('')}
-          </tbody>
-        </table>`;
+          <tbody>${rows}</tbody>
+        </table>
+        ${paginationHtml}`;
     } catch { wrap.innerHTML = '<p style="color:var(--red);padding:16px">Error al cargar preguntas.</p>'; }
+  }
+
+  function buildPagination(page, pages, total, pageSize) {
+    if (pages <= 1) return '';
+    const start = (page - 1) * pageSize + 1;
+    const end = Math.min(page * pageSize, total);
+    let btns = `<button class="page-btn" onclick="loadQuestions(${page - 1})" ${page === 1 ? 'disabled' : ''}>‹</button>`;
+    for (let p = 1; p <= pages; p++) {
+      if (pages > 7 && Math.abs(p - page) > 2 && p !== 1 && p !== pages) {
+        if (p === 2 || p === pages - 1) btns += `<span class="page-info">…</span>`;
+        continue;
+      }
+      btns += `<button class="page-btn ${p === page ? 'active' : ''}" onclick="loadQuestions(${p})">${p}</button>`;
+    }
+    btns += `<button class="page-btn" onclick="loadQuestions(${page + 1})" ${page === pages ? 'disabled' : ''}>›</button>`;
+    btns += `<span class="page-info">${start}–${end} de ${total}</span>`;
+    return `<div class="pagination">${btns}</div>`;
   }
 
   function handleQuestionRowClick(event, q) {
