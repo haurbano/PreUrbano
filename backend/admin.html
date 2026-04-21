@@ -245,6 +245,15 @@
     .page-btn:disabled { opacity: 0.3; cursor: not-allowed; }
     .page-info { font-size: 0.8rem; color: var(--muted); margin-left: 6px; }
 
+    /* Toast */
+    .toast {
+      position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(20px);
+      background: #1e1e2e; border: 1px solid rgba(52,211,153,0.4); color: #34d399;
+      border-radius: 10px; padding: 10px 20px; font-size: 0.88rem; font-weight: 500;
+      opacity: 0; transition: opacity 0.2s, transform 0.2s; pointer-events: none; z-index: 999;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
     /* Filter row */
     .filter-row { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
     .filter-row select {
@@ -502,8 +511,19 @@
   </div>
 </div>
 
+<div class="toast" id="toast"></div>
+
 <script>
   const TOKEN_KEY = 'pu_admin_token';
+
+  let _toastTimer = null;
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(_toastTimer);
+    _toastTimer = setTimeout(() => t.classList.remove('show'), 2500);
+  }
   let currentView = 'subscribers';
 
   function token() { return localStorage.getItem(TOKEN_KEY); }
@@ -629,7 +649,10 @@
         document.getElementById('file-input').value = '';
         document.getElementById('new-subject').value = '';
         document.getElementById('new-correct').value = '';
-        await loadQuestions();
+        updateSaveBtn();
+        await loadQuestions(1);
+        document.getElementById('table-questions').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        showToast('✓ Pregunta guardada');
       }
     } catch { alert('Error de conexión.'); }
 
