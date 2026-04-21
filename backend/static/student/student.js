@@ -1,5 +1,8 @@
 let currentUser = null;
 let _sim = null;
+let _timerInterval = null;
+let _timerSecondsLeft = 0;
+let _pendingNavView = null;
 
 const SUBJECT_LABELS = {
   matematicas: 'Matemáticas',
@@ -59,7 +62,9 @@ async function saveProfile() {
   }
 }
 
-function switchView(view) {
+// ── Navigation (with sim guard) ──────────────────────────────────────────────
+
+function _realSwitchView(view) {
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.getElementById('view-' + view).classList.add('active');
@@ -68,6 +73,35 @@ function switchView(view) {
   if (view === 'simulacro') loadSimIdle();
   if (view === 'progreso')  loadProgress();
 }
+
+function switchView(view) {
+  if (view !== 'simulacro' && _sim !== null && _sim.started === true) {
+    showNavWarning(view);
+    return;
+  }
+  _realSwitchView(view);
+}
+
+function showNavWarning(targetView) {
+  _pendingNavView = targetView;
+  document.getElementById('nav-warn-overlay').style.display = 'flex';
+}
+
+function navWarnCancel() {
+  _pendingNavView = null;
+  document.getElementById('nav-warn-overlay').style.display = 'none';
+}
+
+function navWarnConfirm() {
+  document.getElementById('nav-warn-overlay').style.display = 'none';
+  stopTimer();
+  _sim = null;
+  const view = _pendingNavView;
+  _pendingNavView = null;
+  _realSwitchView(view);
+}
+
+// ── Home ─────────────────────────────────────────────────────────────────────
 
 async function loadHome() {
   const c = document.getElementById('home-container');
@@ -157,14 +191,54 @@ function renderHome(data) {
     </div>`;
 }
 
+// ── Timer ─────────────────────────────────────────────────────────────────────
+
+function startTimer() {
+  clearInterval(_timerInterval);
+  _timerInterval = setInterval(() => {
+    _timerSecondsLeft--;
+    updateTimerDisplay();
+    if (_timerSecondsLeft <= 0) {
+      clearInterval(_timerInterval);
+      _timerInterval = null;
+      submitSim(true);
+    }
+  }, 1000);
+}
+
+function stopTimer() {
+  clearInterval(_timerInterval);
+  _timerInterval = null;
+}
+
+function updateTimerDisplay() {
+  const el = document.getElementById('sim-timer');
+  if (!el) return;
+  const mins = Math.floor(_timerSecondsLeft / 60);
+  const secs = _timerSecondsLeft % 60;
+  el.textContent = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+  el.classList.toggle('urgent', _timerSecondsLeft <= 120);
+}
+
+// ── Simulation ────────────────────────────────────────────────────────────────
+
 async function loadSimIdle() {
+  stopTimer();
+  _sim = null;
   const c = document.getElementById('sim-container');
   c.innerHTML = '<div class="sim-empty">Cargando…</div>';
   try {
     const res = await fetch('/api/simulation/start', { method: 'POST' });
     if (res.status === 401) { logout(); return; }
     const data = await res.json();
-    _sim = { simulationId: data.simulation_id, questions: data.questions || [], currentIndex: 0, answers: [] };
+    _sim = {
+      simulationId: data.simulation_id,
+      questions: data.questions || [],
+      currentIndex: 0,
+      answers: [],
+      timeLimitMinutes: data.time_limit_minutes || 0,
+      started: false,
+    };
     renderSimIdle(data.total_available || 0);
   } catch { renderSimIdle(0); }
 }
@@ -182,6 +256,11 @@ function startSim() {
   if (!_sim || !_sim.questions.length) return;
   _sim.currentIndex = 0;
   _sim.answers = [];
+  _sim.started = true;
+  if (_sim.timeLimitMinutes > 0) {
+    _timerSecondsLeft = _sim.timeLimitMinutes * 60;
+    startTimer();
+  }
   renderSimQuestion();
 }
 
@@ -196,16 +275,21 @@ function renderSimQuestion() {
   const opts = ['A', 'B', 'C', 'D'].map(opt =>
     `<button class="sim-option-btn${selected === opt ? ' selected' : ''}" onclick="selectOption('${opt}')">${opt}</button>`
   ).join('');
+  const timerHtml = _sim.timeLimitMinutes > 0
+    ? `<span class="sim-timer" id="sim-timer"></span>`
+    : '';
   c.innerHTML = `
     <div class="sim-progress">
       <div class="sim-progress-bar"><div class="sim-progress-fill" style="width:${pct}%"></div></div>
       <div class="sim-progress-text">${current} / ${total}</div>
+      ${timerHtml}
     </div>
     <div class="sim-question-img-wrap">
       <img class="sim-question-img" src="/uploads/${q.image_path}" alt="Pregunta ${current}" />
     </div>
     <div class="sim-options">${opts}</div>
     <button class="sim-nav-btn" onclick="${isLast ? 'submitSim()' : 'nextQuestion()'}">${isLast ? 'Entregar simulacro' : 'Siguiente'}</button>`;
+  if (_sim.timeLimitMinutes > 0) updateTimerDisplay();
 }
 
 function selectOption(opt) {
@@ -220,7 +304,8 @@ function nextQuestion() {
   }
 }
 
-async function submitSim() {
+async function submitSim(timedOut = false) {
+  stopTimer();
   const c = document.getElementById('sim-container');
   c.innerHTML = '<div class="sim-empty">Calculando resultados…</div>';
   const answers = _sim.questions
@@ -230,7 +315,7 @@ async function submitSim() {
     const res = await fetch('/api/simulation/submit', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ simulation_id: _sim.simulationId, answers }),
+      body: JSON.stringify({ simulation_id: _sim.simulationId, answers, timed_out: timedOut }),
     });
     if (res.status === 401) { logout(); return; }
     renderSimResult(await res.json());
@@ -242,6 +327,9 @@ async function submitSim() {
 function renderSimResult(data) {
   const c = document.getElementById('sim-container');
   const scoreColor = data.score >= 60 ? 'var(--green)' : 'var(--red)';
+  const timeoutBanner = data.timed_out
+    ? `<div class="sim-timeout-banner">⏱ Tiempo agotado — el simulacro fue enviado automáticamente</div>`
+    : '';
   const breakdown = Object.entries(data.breakdown || {}).map(([subject, bd]) => {
     const pct = bd.total > 0 ? (bd.correct / bd.total * 100) : 0;
     return `<div class="sim-breakdown-row">
@@ -251,6 +339,7 @@ function renderSimResult(data) {
     </div>`;
   }).join('');
   c.innerHTML = `
+    ${timeoutBanner}
     <div class="sim-result-score">
       <div class="big-score" style="color:${scoreColor}">${data.score}<span class="pct">%</span></div>
       <div class="score-label">${data.correct} correctas de ${data.total}</div>
@@ -258,6 +347,8 @@ function renderSimResult(data) {
     ${breakdown ? `<div class="sim-breakdown">${breakdown}</div>` : ''}
     <button class="sim-back-btn" onclick="loadSimIdle()">Hacer otro simulacro</button>`;
 }
+
+// ── Progress ──────────────────────────────────────────────────────────────────
 
 async function loadProgress() {
   const c = document.getElementById('progress-container');
@@ -332,6 +423,8 @@ function renderProgress(data) {
     <div class="history-list">${historyRows}</div>`;
 }
 
+// ── Init ──────────────────────────────────────────────────────────────────────
+
 async function init() {
   localStorage.removeItem('pu_user_token');
   try {
@@ -360,6 +453,8 @@ Object.assign(window, {
   submitSim,
   loadSimIdle,
   loadProgress,
+  navWarnCancel,
+  navWarnConfirm,
 });
 
 init();

@@ -343,3 +343,44 @@ sidebar {
   .history-row    { flex-wrap: wrap; gap: 6px; }
   .history-date   { min-width: unset; }
 }
+
+/* ── Countdown timer ── */
+.sim-timer {
+  font-size: 0.88rem; font-weight: 600; color: var(--muted);
+  white-space: nowrap; font-variant-numeric: tabular-nums; transition: color 0.3s;
+}
+.sim-timer.urgent { color: var(--red); animation: timer-pulse 1s ease-in-out infinite; }
+@keyframes timer-pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.65; } }
+
+/* ── Navigation warning modal ── */
+.nav-warn-overlay {
+  position: fixed; inset: 0;
+  background: rgba(28, 28, 46, 0.45);
+  backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+  z-index: 1000; display: flex; align-items: center; justify-content: center;
+}
+.nav-warn-modal { padding: 32px 36px; max-width: 400px; width: 90%; text-align: center; }
+.nav-warn-title { font-size: 1.1rem; font-weight: 700; color: var(--text); margin: 0 0 10px; }
+.nav-warn-body  { font-size: 0.88rem; color: var(--muted); margin: 0 0 24px; line-height: 1.6; }
+.nav-warn-actions { display: flex; gap: 10px; justify-content: center; }
+.nav-warn-cancel {
+  flex: 1; padding: 12px; background: transparent;
+  border: 1px solid rgba(0, 0, 0, 0.1); border-radius: 12px;
+  font-family: 'Inter', sans-serif; font-size: 0.9rem; color: var(--muted); cursor: pointer;
+  transition: all 0.2s;
+}
+.nav-warn-cancel:hover { border-color: var(--text); color: var(--text); }
+.nav-warn-confirm {
+  flex: 1; padding: 12px; background: #dc2626; border: none;
+  border-radius: 12px; font-family: 'Inter', sans-serif;
+  font-size: 0.9rem; font-weight: 600; color: #fff; cursor: pointer; transition: background 0.2s;
+}
+.nav-warn-confirm:hover { background: #b91c1c; }
+
+/* ── Timed-out result banner ── */
+.sim-timeout-banner {
+  background: rgba(220, 38, 38, 0.08); border: 1px solid rgba(220, 38, 38, 0.2);
+  border-radius: 12px; padding: 12px 16px;
+  font-size: 0.88rem; color: #dc2626; font-weight: 600;
+  text-align: center; margin-bottom: 20px;
+}

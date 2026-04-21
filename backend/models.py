@@ -55,6 +55,7 @@ class SimulationConfig(Base):
         "sociales": 4,
         "ingles": 4,
     })
+    time_limit_minutes: Mapped[int] = mapped_column(Integer, default=0)
 
 
 class SimulationResult(Base):
@@ -65,6 +66,7 @@ class SimulationResult(Base):
     total_questions: Mapped[int]
     correct_answers: Mapped[int]
     breakdown: Mapped[dict] = mapped_column(JSON, default=dict)
+    timed_out: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
     )

@@ -83,6 +83,7 @@ def get_simulation_config(
                 "sociales": 4,
                 "ingles": 4,
             },
+            time_limit_minutes=0,
         )
         db.add(config)
         db.commit()
@@ -106,6 +107,8 @@ def update_simulation_config(
         config.questions_per_simulation = body.questions_per_simulation
     if body.subject_limits is not None:
         config.subject_limits = body.subject_limits
+    if body.time_limit_minutes is not None:
+        config.time_limit_minutes = body.time_limit_minutes
 
     db.commit()
     db.refresh(config)

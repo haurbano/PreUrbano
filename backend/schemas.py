@@ -81,6 +81,7 @@ class SimulationConfigOut(BaseModel):
     id: int
     questions_per_simulation: int
     subject_limits: dict
+    time_limit_minutes: int
 
     model_config = {"from_attributes": True}
 
@@ -88,6 +89,7 @@ class SimulationConfigOut(BaseModel):
 class SimulationConfigUpdate(BaseModel):
     questions_per_simulation: int | None = None
     subject_limits: dict | None = None
+    time_limit_minutes: int | None = None
 
 
 class SimulationResultOut(BaseModel):
@@ -112,6 +114,7 @@ class SimulationStartOut(BaseModel):
     questions: list[QuestionForSim]
     total_available: int
     warning: str | None = None
+    time_limit_minutes: int = 0
 
 
 class SimulationAnswerIn(BaseModel):
@@ -123,6 +126,7 @@ class SimulationAnswerIn(BaseModel):
 class SimulationSubmitIn(BaseModel):
     simulation_id: str
     answers: list[dict]
+    timed_out: bool = False
 
 
 class SimulationSubmitOut(BaseModel):
@@ -131,6 +135,7 @@ class SimulationSubmitOut(BaseModel):
     correct: int
     incorrect: int
     breakdown: dict
+    timed_out: bool = False
 
 
 class SubjectBreakdown(BaseModel):

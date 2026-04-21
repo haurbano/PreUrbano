@@ -8,6 +8,8 @@ export async function loadSimConfig() {
     if (res.status === 401) { logout(); return; }
     const cfg = await res.json();
     document.getElementById('sim-total').value = cfg.questions_per_simulation;
+    const timeLimitEl = document.getElementById('sim-time-limit');
+    if (timeLimitEl) timeLimitEl.value = cfg.time_limit_minutes ?? 0;
     SUBJECT_KEYS.forEach(s => {
       const el = document.getElementById('sim-' + s);
       if (el) el.value = cfg.subject_limits[s] || 0;
@@ -22,6 +24,7 @@ export async function saveSimConfig() {
   btn.disabled = true; btn.textContent = 'Guardando…';
   const body = {
     questions_per_simulation: parseInt(document.getElementById('sim-total').value) || 20,
+    time_limit_minutes: parseInt(document.getElementById('sim-time-limit').value) || 0,
     subject_limits: Object.fromEntries(
       SUBJECT_KEYS.map(s => [s, parseInt(document.getElementById('sim-' + s).value) || 0])
     ),

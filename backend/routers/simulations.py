@@ -43,6 +43,7 @@ def start_simulation(
             id=1,
             questions_per_simulation=DEFAULT_CONFIG["questions_per_simulation"],
             subject_limits=DEFAULT_CONFIG["subject_limits"],
+            time_limit_minutes=0,
         )
         db.add(config)
         db.commit()
@@ -94,6 +95,7 @@ def start_simulation(
         questions=questions_out,
         total_available=total_available,
         warning=warning,
+        time_limit_minutes=config.time_limit_minutes,
     )
 
 
@@ -133,6 +135,7 @@ def submit_simulation(
         total_questions=total,
         correct_answers=correct,
         breakdown=breakdown,
+        timed_out=body.timed_out,
     )
     db.add(result)
     db.commit()
@@ -143,6 +146,7 @@ def submit_simulation(
         correct=correct,
         incorrect=incorrect,
         breakdown=breakdown,
+        timed_out=body.timed_out,
     )
 
 
