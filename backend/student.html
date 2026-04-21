@@ -301,6 +301,10 @@
       document.getElementById('app').classList.add('visible');
       if (!user.is_active) {
         document.getElementById('nav-simulacro').style.display = 'none';
+        document.getElementById('view-inicio').querySelector('.status-label').textContent = 'Cuenta inactiva';
+        document.getElementById('view-inicio').querySelector('.status-msg').textContent = 'Tu cuenta aún no ha sido activada. Contacta al equipo de PreUrbano.';
+        document.getElementById('view-inicio').querySelector('.status-dot').style.background = 'var(--red)';
+        document.getElementById('view-inicio').querySelector('.status-dot').style.boxShadow = 'none';
       }
     } catch { window.location.href = '/'; }
   }
