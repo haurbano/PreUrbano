@@ -126,34 +126,9 @@
     .form-msg { font-size: 0.82rem; margin-top: 12px; min-height: 18px; }
     .form-msg.ok  { color: var(--green); }
     .form-msg.err { color: var(--red); }
-
-    /* ── Deactivated screen ── */
-    #deactivated {
-      display: none;
-      position: fixed; inset: 0; background: var(--bg);
-      flex-direction: column; align-items: center; justify-content: center;
-      text-align: center; padding: 32px; z-index: 999;
-    }
-    #deactivated.visible { display: flex; }
-    #deactivated .d-icon { font-size: 3.5rem; margin-bottom: 20px; }
-    #deactivated .d-title { font-size: 1.3rem; font-weight: 700; margin-bottom: 12px; }
-    #deactivated .d-msg { color: var(--muted); font-size: 0.92rem; max-width: 360px; line-height: 1.7; margin-bottom: 28px; }
-    #deactivated .d-btn {
-      background: transparent; border: 1px solid var(--border); color: var(--muted);
-      border-radius: 8px; padding: 9px 22px; font-family: 'Inter', sans-serif;
-      font-size: 0.88rem; cursor: pointer; transition: all 0.2s;
-    }
-    #deactivated .d-btn:hover { border-color: var(--red); color: var(--red); }
   </style>
 </head>
 <body>
-
-<div id="deactivated">
-  <div class="d-icon">🔒</div>
-  <div class="d-title">Cuenta desactivada</div>
-  <p class="d-msg">Tu cuenta aún no ha sido activada. Contacta al equipo de PreUrbano para más información.</p>
-  <button class="d-btn" onclick="logout()">Cerrar sesión</button>
-</div>
 
 <div id="app">
   <topbar>
@@ -320,10 +295,6 @@
 
     try {
       const res = await fetch('/auth/me');
-      if (res.status === 403) {
-        document.getElementById('deactivated').classList.add('visible');
-        return;
-      }
       if (!res.ok) { window.location.href = '/'; return; }
       const user = await res.json();
       renderUser(user);
