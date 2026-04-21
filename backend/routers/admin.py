@@ -1,10 +1,20 @@
 import os
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import HTMLResponse
 from sqlalchemy.orm import Session
 from database import get_db
-from models import Subscriber, User
-from schemas import LoginRequest, TokenResponse, SubscriberOut, UserOut, UserEnableUpdate
+from models import Subscriber, User, SimulationConfig, SimulationResult
+from schemas import (
+    LoginRequest,
+    TokenResponse,
+    SubscriberOut,
+    UserOut,
+    UserEnableUpdate,
+    SimulationConfigOut,
+    SimulationConfigUpdate,
+    SimulationHistoryOut,
+    SimulationResultOut,
+)
 from auth import create_token, verify_token, ADMIN_PASSWORD
 
 router = APIRouter()
@@ -63,3 +73,75 @@ def update_user(
     db.commit()
     db.refresh(user)
     return user
+
+
+@router.get("/simulation/config", response_model=SimulationConfigOut)
+def get_simulation_config(
+    db: Session = Depends(get_db),
+    _: str = Depends(verify_token),
+):
+    config = db.query(SimulationConfig).filter(SimulationConfig.id == 1).first()
+    if not config:
+        config = SimulationConfig(
+            id=1,
+            questions_per_simulation=20,
+            subject_limits={
+                "matematicas": 4,
+                "ciencias_naturales": 4,
+                "lectura_critica": 4,
+                "sociales": 4,
+                "ingles": 4,
+            },
+        )
+        db.add(config)
+        db.commit()
+        db.refresh(config)
+    return config
+
+
+@router.put("/simulation/config", response_model=SimulationConfigOut)
+def update_simulation_config(
+    body: SimulationConfigUpdate,
+    db: Session = Depends(get_db),
+    _: str = Depends(verify_token),
+):
+    config = db.query(SimulationConfig).filter(SimulationConfig.id == 1).first()
+    if not config:
+        config = SimulationConfig(id=1)
+        db.add(config)
+        db.flush()
+
+    if body.questions_per_simulation is not None:
+        config.questions_per_simulation = body.questions_per_simulation
+    if body.subject_limits is not None:
+        config.subject_limits = body.subject_limits
+
+    db.commit()
+    db.refresh(config)
+    return config
+
+
+@router.get("/simulations", response_model=SimulationHistoryOut)
+def list_simulations(
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=100),
+    user_id: int | None = None,
+    db: Session = Depends(get_db),
+    _: str = Depends(verify_token),
+):
+    query = db.query(SimulationResult).order_by(SimulationResult.created_at.desc())
+    if user_id is not None:
+        query = query.filter(SimulationResult.user_id == user_id)
+
+    total = query.count()
+    pages = (total + page_size - 1) // page_size if total > 0 else 1
+    offset = (page - 1) * page_size
+    items = query.offset(offset).limit(page_size).all()
+
+    return SimulationHistoryOut(
+        items=[SimulationResultOut.model_validate(i) for i in items],
+        total=total,
+        page=page,
+        page_size=page_size,
+        pages=pages,
+    )

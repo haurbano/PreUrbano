@@ -75,3 +75,72 @@ class QuestionUpdate(BaseModel):
 
 class UserEnableUpdate(BaseModel):
     is_active: bool
+
+
+class SimulationConfigOut(BaseModel):
+    id: int
+    questions_per_simulation: int
+    subject_limits: dict
+
+    model_config = {"from_attributes": True}
+
+
+class SimulationConfigUpdate(BaseModel):
+    questions_per_simulation: int | None = None
+    subject_limits: dict | None = None
+
+
+class SimulationResultOut(BaseModel):
+    id: int
+    user_id: int
+    total_questions: int
+    correct_answers: int
+    breakdown: dict
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class QuestionForSim(BaseModel):
+    id: int
+    subject: str
+    image_path: str
+
+
+class SimulationStartOut(BaseModel):
+    simulation_id: str
+    questions: list[QuestionForSim]
+    total_available: int
+    warning: str | None = None
+
+
+class SimulationAnswerIn(BaseModel):
+    simulation_id: str
+    question_id: int
+    selected_option: str
+
+
+class SimulationSubmitIn(BaseModel):
+    simulation_id: str
+    answers: list[dict]
+
+
+class SimulationSubmitOut(BaseModel):
+    score: int
+    total: int
+    correct: int
+    incorrect: int
+    breakdown: dict
+
+
+class SubjectBreakdown(BaseModel):
+    correct: int
+    total: int
+
+
+class SimulationHistoryOut(BaseModel):
+    items: list[SimulationResultOut]
+    total: int
+    page: int
+    page_size: int
+    pages: int

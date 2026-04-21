@@ -277,6 +277,34 @@
     }
     .action-btn.del:hover { border-color: var(--red); color: var(--red); }
 
+    /* Simulation config */
+    .sim-config-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 16px; padding: 28px 32px; max-width: 520px;
+    }
+    .sim-config-row {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 20px;
+    }
+    .sim-config-label { font-size: 0.88rem; font-weight: 500; }
+    .sim-config-input {
+      width: 80px; background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+      border-radius: 10px; padding: 8px 12px; color: var(--text);
+      font-family: 'Inter', sans-serif; font-size: 0.9rem; text-align: center; outline: none;
+    }
+    .sim-config-input:focus { border-color: rgba(108,99,255,0.5); }
+    .sim-config-subjects { display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px; }
+    .sim-config-subject-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 8px 14px; background: rgba(255,255,255,0.02);
+      border-radius: 10px;
+    }
+    .sim-config-subject-row label { font-size: 0.85rem; color: var(--muted); }
+    .sim-config-input--sm { width: 64px; }
+    .form-msg { font-size: 0.82rem; margin-top: 12px; min-height: 18px; }
+    .form-msg.ok { color: var(--green); }
+    .form-msg.err { color: var(--red); }
+
     .edit-select {
       background: rgba(255,255,255,0.04); border: 1px solid var(--border); color: var(--text);
       border-radius: 10px; padding: 9px 12px; font-family: 'Inter', sans-serif;
@@ -404,6 +432,12 @@
         </svg>
         Banco de preguntas
       </button>
+      <button class="nav-item" id="nav-simconfig" onclick="switchView('simconfig')">
+        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
+        </svg>
+        Simulaciones
+      </button>
     </sidebar>
 
     <div class="content">
@@ -515,6 +549,44 @@
         <div id="table-questions"></div>
       </div>
 
+      <!-- Vista: Simconfig -->
+      <div class="view" id="view-simconfig">
+        <div class="section-header" style="margin-bottom:20px">
+          <h2>Configuración de Simulaciones</h2>
+          <button class="refresh-btn" onclick="loadSimConfig()">↻ Actualizar</button>
+        </div>
+        <div class="sim-config-card">
+          <div class="sim-config-row">
+            <label class="sim-config-label">Preguntas por simulacro</label>
+            <input type="number" class="sim-config-input" id="sim-total" min="1" max="100" />
+          </div>
+          <div class="sim-config-subjects">
+            <div class="sim-config-subject-row">
+              <label>Matemáticas</label>
+              <input type="number" class="sim-config-input sim-config-input--sm" id="sim-matematicas" min="0" max="50" />
+            </div>
+            <div class="sim-config-subject-row">
+              <label>Ciencias Naturales</label>
+              <input type="number" class="sim-config-input sim-config-input--sm" id="sim-ciencias_naturales" min="0" max="50" />
+            </div>
+            <div class="sim-config-subject-row">
+              <label>Lectura Crítica</label>
+              <input type="number" class="sim-config-input sim-config-input--sm" id="sim-lectura_critica" min="0" max="50" />
+            </div>
+            <div class="sim-config-subject-row">
+              <label>Sociales</label>
+              <input type="number" class="sim-config-input sim-config-input--sm" id="sim-sociales" min="0" max="50" />
+            </div>
+            <div class="sim-config-subject-row">
+              <label>Inglés</label>
+              <input type="number" class="sim-config-input sim-config-input--sm" id="sim-ingles" min="0" max="50" />
+            </div>
+          </div>
+          <button class="btn" id="sim-save-btn" onclick="saveSimConfig()">Guardar configuración</button>
+          <div class="form-msg" id="sim-config-msg"></div>
+        </div>
+      </div>
+
     </div>
   </div>
 </div>
@@ -574,6 +646,7 @@
     if (view === 'subscribers') loadSubscribers();
     if (view === 'users') loadUsers();
     if (view === 'banco') loadQuestions();
+    if (view === 'simconfig') loadSimConfig();
   }
 
   const SUBJECT_LABELS = {
@@ -940,6 +1013,51 @@
   function closeModal(e) {
     if (e.target === document.getElementById('user-modal'))
       document.getElementById('user-modal').classList.add('hidden');
+  }
+
+  /* ── Simulation config ── */
+  const SUBJECT_KEYS = ['matematicas', 'ciencias_naturales', 'lectura_critica', 'sociales', 'ingles'];
+
+  async function loadSimConfig() {
+    try {
+      const res = await fetch('/admin/simulation/config', { headers: { Authorization: `Bearer ${token()}` } });
+      if (res.status === 401) { logout(); return; }
+      const cfg = await res.json();
+      document.getElementById('sim-total').value = cfg.questions_per_simulation;
+      SUBJECT_KEYS.forEach(s => {
+        const el = document.getElementById('sim-' + s);
+        if (el) el.value = cfg.subject_limits[s] || 0;
+      });
+    } catch { showToast('Error al cargar configuración'); }
+  }
+
+  async function saveSimConfig() {
+    const btn = document.getElementById('sim-save-btn');
+    const msg = document.getElementById('sim-config-msg');
+    msg.textContent = ''; msg.className = 'form-msg';
+    btn.disabled = true; btn.textContent = 'Guardando…';
+    const body = {
+      questions_per_simulation: parseInt(document.getElementById('sim-total').value) || 20,
+      subject_limits: Object.fromEntries(
+        SUBJECT_KEYS.map(s => [s, parseInt(document.getElementById('sim-' + s).value) || 0])
+      ),
+    };
+    try {
+      const res = await fetch('/admin/simulation/config', {
+        method: 'PUT',
+        headers: { Authorization: `Bearer ${token()}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      if (res.status === 401) { logout(); return; }
+      if (!res.ok) throw new Error();
+      msg.textContent = 'Configuración guardada.';
+      msg.className = 'form-msg ok';
+    } catch {
+      msg.textContent = 'Error al guardar.';
+      msg.className = 'form-msg err';
+    } finally {
+      btn.disabled = false; btn.textContent = 'Guardar configuración';
+    }
   }
 
   if (token()) showDashboard();

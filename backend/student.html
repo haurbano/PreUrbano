@@ -126,6 +126,83 @@
     .form-msg { font-size: 0.82rem; margin-top: 12px; min-height: 18px; }
     .form-msg.ok  { color: var(--green); }
     .form-msg.err { color: var(--red); }
+
+    /* ── Simulacro ── */
+    .sim-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 16px; padding: 28px 32px; max-width: 680px;
+      margin: 0 auto;
+    }
+    .sim-card h2 { font-size: 1rem; font-weight: 600; margin-bottom: 4px; }
+    .sim-card .sub { font-size: 0.82rem; color: var(--muted); margin-bottom: 24px; }
+    .sim-start-btn {
+      display: block; width: 100%; background: var(--accent); color: #fff; border: none;
+      border-radius: 12px; padding: 16px; font-family: 'Inter', sans-serif;
+      font-size: 1rem; font-weight: 600; cursor: pointer; transition: opacity 0.2s;
+    }
+    .sim-start-btn:hover { opacity: 0.88; }
+    .sim-progress {
+      display: flex; align-items: center; gap: 12px; margin-bottom: 24px;
+    }
+    .sim-progress-bar {
+      flex: 1; height: 6px; background: rgba(255,255,255,0.08); border-radius: 100px; overflow: hidden;
+    }
+    .sim-progress-fill {
+      height: 100%; background: var(--accent); border-radius: 100px;
+      transition: width 0.3s ease;
+    }
+    .sim-progress-text { font-size: 0.82rem; color: var(--muted); white-space: nowrap; }
+    .sim-question-img-wrap {
+      display: flex; justify-content: center; margin-bottom: 24px;
+    }
+    .sim-question-img {
+      max-width: 100%; max-height: 420px; height: auto; object-fit: contain;
+      border-radius: 12px; border: 1px solid var(--border);
+    }
+    .sim-options {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 24px;
+    }
+    .sim-option-btn {
+      background: rgba(255,255,255,0.04); border: 1.5px solid var(--border); border-radius: 12px;
+      padding: 14px 8px; font-family: 'Inter', sans-serif; font-size: 1.1rem; font-weight: 700;
+      color: var(--text); cursor: pointer; transition: all 0.15s; text-align: center;
+    }
+    .sim-option-btn:hover { border-color: var(--accent); background: rgba(108,99,255,0.08); }
+    .sim-option-btn.selected { border-color: var(--accent); background: rgba(108,99,255,0.15); color: var(--accent); }
+    .sim-nav-btn {
+      display: block; width: 100%; background: var(--accent); color: #fff; border: none;
+      border-radius: 12px; padding: 14px; font-family: 'Inter', sans-serif;
+      font-size: 0.95rem; font-weight: 600; cursor: pointer; transition: opacity 0.2s;
+    }
+    .sim-nav-btn:hover { opacity: 0.88; }
+    .sim-nav-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .sim-result-score {
+      text-align: center; margin-bottom: 28px;
+    }
+    .sim-result-score .big-score {
+      font-size: 3.5rem; font-weight: 700; letter-spacing: -2px; line-height: 1;
+    }
+    .sim-result-score .big-score .pct { font-size: 1.4rem; color: var(--muted); font-weight: 500; }
+    .sim-result-score .score-label { font-size: 0.82rem; color: var(--muted); margin-top: 6px; }
+    .sim-breakdown { display: flex; flex-direction: column; gap: 8px; margin-bottom: 28px; }
+    .sim-breakdown-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 14px; background: rgba(255,255,255,0.03); border-radius: 10px;
+    }
+    .sim-breakdown-row .bd-label { font-size: 0.85rem; color: var(--muted); }
+    .sim-breakdown-row .bd-val { font-size: 0.88rem; font-weight: 600; }
+    .sim-breakdown-row .bd-bar {
+      flex: 1; margin: 0 12px; height: 4px; background: rgba(255,255,255,0.08);
+      border-radius: 100px; overflow: hidden; max-width: 120px;
+    }
+    .sim-breakdown-row .bd-fill { height: 100%; background: var(--green); border-radius: 100px; }
+    .sim-back-btn {
+      display: block; width: 100%; background: transparent; color: var(--muted);
+      border: 1px solid var(--border); border-radius: 12px; padding: 12px;
+      font-family: 'Inter', sans-serif; font-size: 0.9rem; cursor: pointer; transition: all 0.2s;
+    }
+    .sim-back-btn:hover { border-color: var(--text); color: var(--text); }
+    .sim-empty { text-align: center; padding: 32px; color: var(--muted); }
   </style>
 </head>
 <body>
@@ -208,11 +285,7 @@
 
       <!-- Vista: Simulacro -->
       <div class="view" id="view-simulacro">
-        <div class="welcome-card">
-          <div><span class="status-dot"></span><span class="status-label">Simulacro ICFES</span></div>
-          <p class="status-msg">Esta funcionalidad estará disponible muy pronto.</p>
-          <p class="status-sub">Prepárate para el examen con preguntas de práctica 📚</p>
-        </div>
+        <div class="sim-card" id="sim-container"></div>
       </div>
 
     </div>
@@ -231,63 +304,17 @@
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
     document.getElementById('view-' + view).classList.add('active');
     document.getElementById('nav-' + view).classList.add('active');
+    if (view === 'simulacro') loadSimIdle();
   }
 
-  function renderUser(user) {
-    currentUser = user;
-
-    // Sidebar
-    document.getElementById('sb-name').textContent = user.name;
-    document.getElementById('sb-email').textContent = user.email;
-    const avEl = document.getElementById('sb-avatar');
-    avEl.innerHTML = user.picture
-      ? `<img class="sidebar-avatar" src="${user.picture}" referrerpolicy="no-referrer" />`
-      : `<div class="sidebar-avatar-placeholder">👤</div>`;
-
-    // Profile form
-    document.getElementById('field-email').value    = user.email;
-    document.getElementById('field-name').value     = user.name || '';
-    document.getElementById('field-document').value = user.document_id || '';
-    document.getElementById('field-phone').value    = user.phone || '';
-  }
-
-  async function saveProfile() {
-    const btn = document.getElementById('save-btn');
-    const msg = document.getElementById('profile-msg');
-    msg.textContent = ''; msg.className = 'form-msg';
-    btn.disabled = true; btn.textContent = 'Guardando…';
-
-    const body = {
-      name:        document.getElementById('field-name').value.trim(),
-      document_id: document.getElementById('field-document').value.trim() || null,
-      phone:       document.getElementById('field-phone').value.trim() || null,
-    };
-
-    if (!body.name) {
-      msg.textContent = 'El nombre es requerido.';
-      msg.className = 'form-msg err';
-      btn.disabled = false; btn.textContent = 'Guardar cambios';
-      return;
-    }
-
+  async function loadSimIdle() {
     try {
-      const res = await fetch('/auth/profile', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      });
+      const res = await fetch('/api/simulation/start', { method: 'POST' });
       if (res.status === 401) { logout(); return; }
-      if (!res.ok) throw new Error();
-      const user = await res.json();
-      renderUser(user);
-      msg.textContent = 'Datos guardados correctamente.';
-      msg.className = 'form-msg ok';
-    } catch {
-      msg.textContent = 'Error al guardar. Intenta de nuevo.';
-      msg.className = 'form-msg err';
-    } finally {
-      btn.disabled = false; btn.textContent = 'Guardar cambios';
-    }
+      const data = await res.json();
+      _sim = { simulationId: null, questions: data.questions || [], currentIndex: 0, answers: [] };
+      renderSimIdle(data.total_available || 0);
+    } catch { renderSimIdle(0); }
   }
 
   async function init() {
