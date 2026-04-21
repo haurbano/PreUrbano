@@ -144,3 +144,22 @@ class SimulationHistoryOut(BaseModel):
     page: int
     page_size: int
     pages: int
+
+
+class SimulationSummary(BaseModel):
+    id: int
+    created_at: datetime
+    total_questions: int
+    correct_answers: int
+    incorrect_answers: int
+    score_pct: int
+    breakdown: dict
+
+
+class StudentProgressOut(BaseModel):
+    total_simulations: int
+    total_questions: int
+    total_correct: int
+    total_incorrect: int
+    by_subject: dict[str, SubjectBreakdown]
+    simulations: list[SimulationSummary]

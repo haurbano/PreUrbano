@@ -10,6 +10,7 @@ from schemas import (
     SimulationSubmitIn,
     SimulationSubmitOut,
     QuestionForSim,
+    StudentProgressOut,
 )
 from auth import verify_user_token_cookie
 
@@ -142,4 +143,50 @@ def submit_simulation(
         correct=correct,
         incorrect=incorrect,
         breakdown=breakdown,
+    )
+
+
+@router.get("/student/progress", response_model=StudentProgressOut)
+def get_student_progress(
+    token_data: dict = Depends(verify_user_token_cookie),
+    db: Session = Depends(get_db),
+):
+    user_id = int(token_data["sub"])
+    results = (
+        db.query(SimulationResult)
+        .filter(SimulationResult.user_id == user_id)
+        .order_by(SimulationResult.created_at.desc())
+        .all()
+    )
+
+    total_questions = 0
+    total_correct = 0
+    by_subject: dict[str, dict[str, int]] = {}
+    simulations = []
+
+    for r in results:
+        total_questions += r.total_questions
+        total_correct += r.correct_answers
+        for subject, bd in (r.breakdown or {}).items():
+            agg = by_subject.setdefault(subject, {"correct": 0, "total": 0})
+            agg["correct"] += bd.get("correct", 0)
+            agg["total"] += bd.get("total", 0)
+        score_pct = round((r.correct_answers / r.total_questions) * 100) if r.total_questions else 0
+        simulations.append({
+            "id": r.id,
+            "created_at": r.created_at,
+            "total_questions": r.total_questions,
+            "correct_answers": r.correct_answers,
+            "incorrect_answers": r.total_questions - r.correct_answers,
+            "score_pct": score_pct,
+            "breakdown": r.breakdown or {},
+        })
+
+    return StudentProgressOut(
+        total_simulations=len(results),
+        total_questions=total_questions,
+        total_correct=total_correct,
+        total_incorrect=total_questions - total_correct,
+        by_subject=by_subject,
+        simulations=simulations,
     )

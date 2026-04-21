@@ -65,6 +65,7 @@ function switchView(view) {
   document.getElementById('view-' + view).classList.add('active');
   document.getElementById('nav-' + view).classList.add('active');
   if (view === 'simulacro') loadSimIdle();
+  if (view === 'progreso')  loadProgress();
 }
 
 async function loadSimIdle() {
@@ -169,6 +170,79 @@ function renderSimResult(data) {
     <button class="sim-back-btn" onclick="loadSimIdle()">Hacer otro simulacro</button>`;
 }
 
+async function loadProgress() {
+  const c = document.getElementById('progress-container');
+  c.innerHTML = '<div class="sim-empty">Cargando…</div>';
+  try {
+    const res = await fetch('/api/student/progress');
+    if (res.status === 401) { logout(); return; }
+    if (!res.ok) throw new Error();
+    renderProgress(await res.json());
+  } catch {
+    c.innerHTML = '<div class="sim-empty">Error al cargar el progreso.</div>';
+  }
+}
+
+function renderProgress(data) {
+  const c = document.getElementById('progress-container');
+
+  if (data.total_simulations === 0) {
+    c.innerHTML = `
+      <div class="progress-empty">
+        <div class="progress-empty-icon">📊</div>
+        <p>Aún no has completado simulacros.</p>
+        <button class="sim-start-btn" style="max-width:260px" onclick="switchView('simulacro')">Hacer mi primer simulacro</button>
+      </div>`;
+    return;
+  }
+
+  const avgPct = data.total_questions > 0
+    ? Math.round((data.total_correct / data.total_questions) * 100)
+    : 0;
+
+  const cards = `
+    <div class="progress-cards">
+      <div class="progress-card">
+        <div class="progress-card-num">${data.total_simulations}</div>
+        <div class="progress-card-label">Simulacros completados</div>
+      </div>
+      <div class="progress-card">
+        <div class="progress-card-num" style="color:${avgPct >= 60 ? 'var(--green)' : 'var(--red)'}">${avgPct}%</div>
+        <div class="progress-card-label">Promedio global</div>
+      </div>
+      <div class="progress-card">
+        <div class="progress-card-num"><span style="color:var(--green)">${data.total_correct}</span> / <span style="color:var(--red)">${data.total_incorrect}</span></div>
+        <div class="progress-card-label">Correctas / Incorrectas</div>
+      </div>
+    </div>`;
+
+  const subjectRows = Object.entries(data.by_subject).map(([subject, bd]) => {
+    const pct = bd.total > 0 ? (bd.correct / bd.total * 100) : 0;
+    return `<div class="sim-breakdown-row">
+      <span class="bd-label">${SUBJECT_LABELS[subject] || subject}</span>
+      <div class="bd-bar"><div class="bd-fill" style="width:${pct}%"></div></div>
+      <span class="bd-val">${bd.correct}/${bd.total}</span>
+    </div>`;
+  }).join('');
+
+  const historyRows = data.simulations.map(s => {
+    const date = new Date(s.created_at).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' });
+    const scoreColor = s.score_pct >= 60 ? 'var(--green)' : 'var(--red)';
+    return `<div class="history-row">
+      <span class="history-date">${date}</span>
+      <span class="history-score" style="color:${scoreColor}">${s.score_pct}%</span>
+      <span class="history-detail">${s.correct_answers} correctas de ${s.total_questions}</span>
+    </div>`;
+  }).join('');
+
+  c.innerHTML = `
+    ${cards}
+    <div class="progress-section-title">Por materia</div>
+    <div class="sim-breakdown">${subjectRows}</div>
+    <div class="progress-section-title">Historial</div>
+    <div class="history-list">${historyRows}</div>`;
+}
+
 async function init() {
   localStorage.removeItem('pu_user_token');
   try {
@@ -179,6 +253,7 @@ async function init() {
     document.getElementById('app').classList.add('visible');
     if (!user.is_active) {
       document.getElementById('nav-simulacro').style.display = 'none';
+      document.getElementById('nav-progreso').style.display  = 'none';
       document.getElementById('view-inicio').querySelector('.status-label').textContent = 'Cuenta inactiva';
       document.getElementById('view-inicio').querySelector('.status-msg').textContent   = 'Tu cuenta aún no ha sido activada. Contacta al equipo de PreUrbano.';
       document.getElementById('view-inicio').querySelector('.status-dot').style.background  = 'var(--red)';
@@ -197,6 +272,7 @@ Object.assign(window, {
   nextQuestion,
   submitSim,
   loadSimIdle,
+  loadProgress,
 });
 
 init();
