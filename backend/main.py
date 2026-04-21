@@ -14,7 +14,9 @@ Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="PreUrbano API", docs_url=None, redoc_url=None)
 
-SECRET = os.getenv("JWT_SECRET", "change-me-in-production")
+SECRET = os.getenv("JWT_SECRET")
+if not SECRET:
+    raise RuntimeError("JWT_SECRET environment variable is required")
 app.add_middleware(SessionMiddleware, secret_key=SECRET)
 
 origins = os.getenv("CORS_ORIGINS", "https://preurbano.com").split(",")

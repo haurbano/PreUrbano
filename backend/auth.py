@@ -4,8 +4,12 @@ from datetime import datetime, timedelta, timezone
 from fastapi import HTTPException, Security
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
-SECRET = os.getenv("JWT_SECRET", "change-me-in-production")
-ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "admin")
+SECRET = os.getenv("JWT_SECRET")
+if not SECRET:
+    raise RuntimeError("JWT_SECRET environment variable is required")
+ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD")
+if not ADMIN_PASSWORD:
+    raise RuntimeError("ADMIN_PASSWORD environment variable is required")
 ALGORITHM = "HS256"
 EXPIRY_HOURS = 8
 
