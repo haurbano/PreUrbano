@@ -20,19 +20,21 @@ Landing page de expectativa + plataforma de práctica ICFES gratuita para estudi
 
 ### Comandos de deploy
 ```bash
-# Cambios solo en index.html (bind mount — no requiere rebuild)
-scp index.html haurbano@192.168.1.66:/home/haurbano/preurbano-new/index.html
-ssh haurbano@192.168.1.66 "docker restart preurbano-new-web-1"
-
 # Cambios en backend (Python, HTML del backend, requirements)
+git push origin main
 ssh haurbano@192.168.1.66 "cd /home/haurbano/preurbano-new && git pull && docker compose up -d --build backend"
 
-# Cambios en nginx.conf (bind mount — no requiere rebuild)
-scp nginx.conf haurbano@192.168.1.66:/home/haurbano/preurbano-new/nginx.conf
-ssh haurbano@192.168.1.66 "docker exec preurbano-new-web-1 nginx -s reload"
+# Cambios solo en index.html (bind mount)
+git push origin main
+ssh haurbano@192.168.1.66 "cd /home/haurbano/preurbano-new && git pull && docker restart preurbano-new-web-1"
+
+# Cambios en nginx.conf (bind mount)
+git push origin main
+ssh haurbano@192.168.1.66 "cd /home/haurbano/preurbano-new && git pull && docker restart preurbano-new-web-1"
 ```
 
-> **Importante:** `git pull` en el servidor NO actualiza la imagen Docker — siempre hacer `--build` para cambios de Python. El `index.html` y `nginx.conf` usan bind mount y se actualizan sin rebuild, pero hay que reiniciar el contenedor web para que nginx lo tome.
+> **Importante:** Siempre commit + push + `git pull` en el servidor. Nunca usar `scp` directo — el repo y el servidor quedarían desincronizados.
+> `nginx -s reload` a veces no aplica cambios de bind mounts — usar `docker restart preurbano-new-web-1` para garantizar que nginx tome el nuevo config.
 
 ## Estructura del backend
 ```
@@ -40,14 +42,15 @@ backend/
 ├── main.py              # FastAPI app, middlewares, routers
 ├── auth.py              # JWT admin + JWT estudiante
 ├── database.py          # SQLAlchemy engine + SessionLocal
-├── models.py            # Subscriber, User
+├── models.py            # Subscriber, User, Question
 ├── schemas.py           # Pydantic schemas
 ├── admin.html           # Panel admin (SPA vanilla JS)
 ├── student.html         # App estudiante (SPA vanilla JS)
 ├── routers/
 │   ├── subscribe.py     # POST /api/subscribe
 │   ├── admin.py         # /admin/* (login, subscribers, users)
-│   └── auth.py          # /auth/google/* + /auth/me + /auth/profile
+│   ├── auth.py          # /auth/google/* + /auth/me + /auth/profile
+│   └── questions.py     # /admin/questions/* (banco de preguntas)
 └── Dockerfile
 ```
 
@@ -60,11 +63,21 @@ CORS_ORIGINS=https://preurbano.com
 GOOGLE_CLIENT_ID=...
 GOOGLE_CLIENT_SECRET=...
 APP_BASE_URL=https://preurbano.com
+ANTHROPIC_API_KEY=...   # presente en .env pero ya no se usa activamente
 ```
 
 ## Modelos de DB actuales
 - **Subscriber:** email, source (hero|cta), created_at
 - **User:** google_id, email, name, picture, is_active, document_id, phone, created_at
+- **Question:** subject, correct_option (A|B|C|D), image_path, created_at
+
+## Banco de preguntas
+El admin sube una imagen (JPG/PNG/WebP, máx 20 MB) que contiene la pregunta completa con sus opciones visuales. Selecciona manualmente la materia y la respuesta correcta. No hay procesamiento con IA.
+
+- Imágenes guardadas en `/app/uploads/` (volume montado en `./uploads/`)
+- Servidas vía FastAPI `StaticFiles` en `/uploads/`
+- En el admin HTML las URLs apuntan a `https://preurbano.com/uploads/<filename>` (no al dominio admin) porque el tunnel de Cloudflare para `admin.preurbano.com` no enruta `/uploads/` correctamente
+- Paginación: 20 preguntas por página, endpoint retorna `{items, total, page, page_size, pages}`
 
 ## Rutas API
 | Método | Ruta | Auth | Descripción |
@@ -77,10 +90,15 @@ APP_BASE_URL=https://preurbano.com
 | GET | `/auth/google/callback` | — | Callback OAuth2 |
 | GET | `/auth/me` | User JWT | Perfil del usuario |
 | PUT | `/auth/profile` | User JWT | Actualiza nombre/documento/teléfono |
+| POST | `/admin/questions` | Admin JWT | Crea pregunta (multipart: file + subject + correct_option) |
+| GET | `/admin/questions` | Admin JWT | Lista preguntas paginadas (query: subject, page) |
+| PATCH | `/admin/questions/{id}` | Admin JWT | Edita subject y/o correct_option |
+| DELETE | `/admin/questions/{id}` | Admin JWT | Elimina pregunta y su imagen |
 
 ## Nginx
-- `preurbano.com` → sirve `index.html` (static) + proxea `/api/`, `/auth/`, `/app` al backend
-- `admin.preurbano.com` → proxea todo a `backend:8000/admin/` (con trailing slash — crítico)
+- `preurbano.com` → sirve `index.html` (static) + proxea `/api/`, `/auth/`, `/app`, `/uploads/` al backend
+- `admin.preurbano.com` → proxea todo a `backend:8000/admin/` (con trailing slash — crítico); `client_max_body_size 25m`
+- `/uploads/` usa `location ^~ /uploads/` para tener prioridad sobre el regex de assets estáticos (`.png`, `.jpg`, etc.)
 - Rate limiting: `/api/subscribe` → 5 req/min por IP
 
 ## Secretos del servidor (macOS Keychain)
@@ -93,4 +111,4 @@ security find-generic-password -a haurbano -s homelab-ubuntu-vm -w  # sudo passw
 - Redirect URI registrada: `https://preurbano.com/auth/google/callback`
 
 ## Backlog
-Ver `BACKLOG.md`. Próximo ítem: banco de preguntas con subida de PDF/imagen + Claude API.
+Ver `BACKLOG.md`.
