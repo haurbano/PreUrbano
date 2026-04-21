@@ -1,7 +1,7 @@
 import os
 import jwt
 from datetime import datetime, timedelta, timezone
-from fastapi import HTTPException, Security
+from fastapi import Cookie, HTTPException, Security
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 SECRET = os.getenv("JWT_SECRET")
@@ -43,9 +43,11 @@ def create_user_token(user_id: int, email: str) -> str:
     return jwt.encode(payload, SECRET, algorithm=ALGORITHM)
 
 
-def verify_user_token(credentials: HTTPAuthorizationCredentials = Security(bearer)) -> dict:
+def verify_user_token_cookie(pu_auth: str | None = Cookie(default=None)) -> dict:
+    if not pu_auth:
+        raise HTTPException(status_code=401, detail="No autenticado")
     try:
-        data = jwt.decode(credentials.credentials, SECRET, algorithms=[ALGORITHM])
+        data = jwt.decode(pu_auth, SECRET, algorithms=[ALGORITHM])
         if data.get("sub") == "admin":
             raise HTTPException(status_code=401, detail="Token inválido")
         return data

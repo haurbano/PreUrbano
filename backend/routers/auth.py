@@ -4,7 +4,7 @@ from fastapi.responses import RedirectResponse
 from authlib.integrations.httpx_client import AsyncOAuth2Client
 from database import SessionLocal
 from models import User
-from auth import create_user_token, verify_user_token
+from auth import create_user_token, verify_user_token_cookie
 from schemas import UserOut, UserProfileUpdate
 
 router = APIRouter()
@@ -68,30 +68,47 @@ async def google_callback(request: Request, code: str, state: str):
     finally:
         db.close()
 
-    return RedirectResponse(f"{APP_BASE_URL}/app?token={token}")
+    response = RedirectResponse(f"{APP_BASE_URL}/app")
+    response.set_cookie(
+        key="pu_auth",
+        value=token,
+        httponly=True,
+        secure=True,
+        samesite="lax",
+        max_age=8 * 3600,
+        path="/",
+    )
+    return response
+
+
+@router.get("/logout")
+async def logout():
+    response = RedirectResponse("/")
+    response.delete_cookie(key="pu_auth", path="/")
+    return response
 
 
 @router.get("/me", response_model=UserOut)
-async def me(token_data: dict = Depends(verify_user_token)):
+async def me(token_data: dict = Depends(verify_user_token_cookie)):
+    from fastapi import HTTPException
     db = SessionLocal()
     try:
         user = db.query(User).filter(User.id == int(token_data["sub"])).first()
         if not user:
-            from fastapi import HTTPException
-            raise HTTPException(status_code=404, detail="Usuario no encontrado")
+            raise HTTPException(status_code=401, detail="No autenticado")
         return user
     finally:
         db.close()
 
 
 @router.put("/profile", response_model=UserOut)
-async def update_profile(body: UserProfileUpdate, token_data: dict = Depends(verify_user_token)):
+async def update_profile(body: UserProfileUpdate, token_data: dict = Depends(verify_user_token_cookie)):
     from fastapi import HTTPException
     db = SessionLocal()
     try:
         user = db.query(User).filter(User.id == int(token_data["sub"])).first()
         if not user:
-            raise HTTPException(status_code=404, detail="Usuario no encontrado")
+            raise HTTPException(status_code=401, detail="No autenticado")
         user.name = body.name.strip()
         user.document_id = body.document_id.strip() if body.document_id else None
         user.phone = body.phone.strip() if body.phone else None

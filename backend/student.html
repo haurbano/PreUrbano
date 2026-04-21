@@ -205,16 +205,10 @@
 </div>
 
 <script>
-  const TOKEN_KEY = 'pu_user_token';
   let currentUser = null;
 
-  function parseJwt(t) {
-    try { return JSON.parse(atob(t.split('.')[1])); } catch { return null; }
-  }
-
   function logout() {
-    localStorage.removeItem(TOKEN_KEY);
-    window.location.href = '/';
+    window.location.href = '/auth/logout';
   }
 
   function switchView(view) {
@@ -264,7 +258,7 @@
     try {
       const res = await fetch('/auth/profile', {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem(TOKEN_KEY)}` },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });
       if (res.status === 401) { logout(); return; }
@@ -282,25 +276,15 @@
   }
 
   async function init() {
-    const params = new URLSearchParams(window.location.search);
-    const urlToken = params.get('token');
-    if (urlToken) {
-      localStorage.setItem(TOKEN_KEY, urlToken);
-      history.replaceState({}, '', '/app');
-    }
-
-    const t = localStorage.getItem(TOKEN_KEY);
-    if (!t) { window.location.href = '/'; return; }
-
-    const payload = parseJwt(t);
-    if (!payload || payload.exp * 1000 < Date.now()) { logout(); return; }
+    // Clean up any legacy token left in localStorage
+    localStorage.removeItem('pu_user_token');
 
     try {
-      const res = await fetch('/auth/me', { headers: { Authorization: `Bearer ${t}` } });
-      if (!res.ok) { logout(); return; }
+      const res = await fetch('/auth/me');
+      if (!res.ok) { window.location.href = '/'; return; }
       renderUser(await res.json());
       document.getElementById('app').classList.add('visible');
-    } catch { logout(); }
+    } catch { window.location.href = '/'; }
   }
 
   init();

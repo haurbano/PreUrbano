@@ -24,7 +24,7 @@
 - [x] **Eliminar valores por defecto inseguros en secretos** — `auth.py:7-8`
   `JWT_SECRET` y `ADMIN_PASSWORD` tienen fallbacks (`"change-me-in-production"`, `"admin"`). Remover defaults y lanzar excepción en startup si las variables de entorno no están definidas.
 
-- [ ] **Mover token JWT de URL a cookie HttpOnly** — `routers/auth.py:71`
+- [x] **Mover token JWT de URL a cookie HttpOnly** — `routers/auth.py:71`
   El redirect OAuth envía el token en la URL (`?token=...`), exponiéndolo en logs de nginx/Cloudflare, historial del browser y header `Referer`. Cambiar a cookie `HttpOnly; Secure; SameSite=Lax`.
 
 - [x] **Agregar rate limiting al endpoint `/admin/login`** — `routers/admin.py:29`
