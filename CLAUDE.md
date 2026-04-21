@@ -100,6 +100,7 @@ El admin sube una imagen (JPG/PNG/WebP, máx 20 MB) que contiene la pregunta com
 - `admin.preurbano.com` → proxea todo a `backend:8000/admin/` (con trailing slash — crítico); `client_max_body_size 25m`
 - `/uploads/` usa `location ^~ /uploads/` para tener prioridad sobre el regex de assets estáticos (`.png`, `.jpg`, etc.)
 - Rate limiting: `/api/subscribe` → 5 req/min por IP
+- **Cache de estáticos:** `.js` y `.css` se cachean con `max-age=1 año, immutable`. Al modificar `student.js`, `student.css`, `admin.css`, `app.js`, etc., hay que incrementar el query param de versión en el HTML que los referencia (ej. `?v=2` → `?v=3`) para que los browsers los recarguen. Lo mismo aplica a `landing.css` / `landing.js` referenciados desde `index.html`.
 
 ## Secretos del servidor (macOS Keychain)
 ```bash
