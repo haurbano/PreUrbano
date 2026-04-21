@@ -669,6 +669,7 @@
 
   /* ── API: Load questions ── */
   let _currentPage = 1;
+  const _questionsCache = {};
 
   async function loadQuestions(page) {
     if (page !== undefined) _currentPage = page;
@@ -686,9 +687,10 @@
         wrap.innerHTML = '<div class="empty-state">No hay preguntas aún.</div>';
         return;
       }
+      data.items.forEach(q => { _questionsCache[q.id] = q; });
       const rows = data.items.map(q => `
-        <tr class="clickable" onclick="handleQuestionRowClick(event, ${JSON.stringify(q).replace(/"/g, '&quot;')})">
-          <td><img class="q-thumb" src="/uploads/${q.image_path}" /></td>
+        <tr class="clickable" onclick="handleQuestionRowClick(${q.id})">
+          <td><img class="q-thumb" src="https://preurbano.com/uploads/${q.image_path}" /></td>
           <td><span class="badge badge-${q.subject}">${subjectLabel(q.subject)}</span></td>
           <td><span class="badge badge-option">${q.correct_option}</span></td>
           <td style="color:var(--muted)">${new Date(q.created_at).toLocaleDateString('es-CO')}</td>
@@ -725,8 +727,9 @@
     return `<div class="pagination">${btns}</div>`;
   }
 
-  function handleQuestionRowClick(event, q) {
-    openQuestionDetail(q);
+  function handleQuestionRowClick(id) {
+    const q = _questionsCache[id];
+    if (q) openQuestionDetail(q);
   }
 
   /* ── Question detail page ── */
