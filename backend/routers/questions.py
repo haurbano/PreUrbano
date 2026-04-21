@@ -1,134 +1,64 @@
 import uuid
-import os
 from pathlib import Path
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, BackgroundTasks, Query
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, Query
 from sqlalchemy.orm import Session
-from database import get_db, SessionLocal
-from models import UploadedFile, Question
-from schemas import UploadedFileOut, QuestionOut, QuestionUpdate
+from database import get_db
+from models import Question
+from schemas import QuestionOut, QuestionUpdate
 from auth import verify_token
 
 router = APIRouter()
 
 UPLOADS_DIR = Path("/app/uploads")
-IMAGES_DIR = UPLOADS_DIR / "images"
-MAX_SIZE = 20 * 1024 * 1024  # 20 MB
-ALLOWED_TYPES = {
-    "application/pdf": "pdf",
-    "image/jpeg": "image",
-    "image/png": "image",
-}
+MAX_SIZE = 20 * 1024 * 1024
+ALLOWED_TYPES = {"image/jpeg", "image/png", "image/webp"}
+SUBJECTS = {"matematicas", "ciencias_naturales", "lectura_critica", "sociales", "ingles"}
+OPTIONS = {"A", "B", "C", "D"}
 
 
-def _process_upload(upload_id: int, file_path: str, file_type: str):
-    """Background task: extract content and generate questions via AI."""
-    db = SessionLocal()
-    try:
-        upload = db.query(UploadedFile).filter(UploadedFile.id == upload_id).first()
-        if not upload:
-            return
-
-        from services.extractor import extract_from_pdf, extract_from_image
-        from services.ai_generator import generate_questions
-
-        if file_type == "pdf":
-            content = extract_from_pdf(file_path)
-        else:
-            content = extract_from_image(file_path)
-
-        questions_data = generate_questions(content["text"], content["images"])
-
-        for q in questions_data:
-            question = Question(
-                upload_id=upload_id,
-                subject=q["subject"],
-                stem=q["stem"],
-                option_a=q["option_a"],
-                option_b=q["option_b"],
-                option_c=q["option_c"],
-                option_d=q["option_d"],
-                correct_option=q["correct_option"],
-                explanation=q.get("explanation"),
-            )
-            db.add(question)
-
-        upload.status = "done"
-        upload.questions_generated = len(questions_data)
-        db.commit()
-
-    except Exception as e:
-        db.rollback()
-        try:
-            upload = db.query(UploadedFile).filter(UploadedFile.id == upload_id).first()
-            if upload:
-                upload.status = "error"
-                upload.error_msg = str(e)[:500]
-                db.commit()
-        except Exception:
-            pass
-    finally:
-        db.close()
-
-
-@router.post("/upload", response_model=UploadedFileOut)
-async def upload_file(
-    background_tasks: BackgroundTasks,
+@router.post("/questions", response_model=QuestionOut)
+async def create_question(
     file: UploadFile = File(...),
+    subject: str = Form(...),
+    correct_option: str = Form(...),
     db: Session = Depends(get_db),
     _: str = Depends(verify_token),
 ):
-    content_type = file.content_type or ""
-    if content_type not in ALLOWED_TYPES:
-        raise HTTPException(status_code=400, detail="Solo se aceptan PDF, JPG o PNG.")
+    if file.content_type not in ALLOWED_TYPES:
+        raise HTTPException(status_code=400, detail="Solo se aceptan imágenes JPG, PNG o WebP.")
 
-    file_data = await file.read()
-    if len(file_data) > MAX_SIZE:
-        raise HTTPException(status_code=400, detail="El archivo supera el límite de 20 MB.")
+    if subject not in SUBJECTS:
+        raise HTTPException(status_code=400, detail="Materia inválida.")
 
-    ext = "pdf" if content_type == "application/pdf" else file.filename.rsplit(".", 1)[-1].lower()
-    stored_name = f"{uuid.uuid4().hex}.{ext}"
-    file_path = str(UPLOADS_DIR / stored_name)
+    correct_option = correct_option.upper()
+    if correct_option not in OPTIONS:
+        raise HTTPException(status_code=400, detail="La respuesta correcta debe ser A, B, C o D.")
 
+    data = await file.read()
+    if len(data) > MAX_SIZE:
+        raise HTTPException(status_code=400, detail="La imagen supera el límite de 20 MB.")
+
+    ext = file.filename.rsplit(".", 1)[-1].lower() if file.filename and "." in file.filename else "jpg"
+    filename = f"{uuid.uuid4().hex}.{ext}"
     UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
-    Path(file_path).write_bytes(file_data)
+    (UPLOADS_DIR / filename).write_bytes(data)
 
-    upload = UploadedFile(
-        original_name=file.filename or stored_name,
-        stored_name=stored_name,
-        file_type=ALLOWED_TYPES[content_type],
-        status="processing",
-    )
-    db.add(upload)
+    question = Question(subject=subject, correct_option=correct_option, image_path=filename)
+    db.add(question)
     db.commit()
-    db.refresh(upload)
-
-    background_tasks.add_task(_process_upload, upload.id, file_path, upload.file_type)
-    return upload
-
-
-@router.get("/uploads", response_model=list[UploadedFileOut])
-def list_uploads(
-    db: Session = Depends(get_db),
-    _: str = Depends(verify_token),
-):
-    return db.query(UploadedFile).order_by(UploadedFile.created_at.desc()).all()
+    db.refresh(question)
+    return question
 
 
 @router.get("/questions", response_model=list[QuestionOut])
 def list_questions(
-    status: str | None = Query(None),
     subject: str | None = Query(None),
-    upload_id: int | None = Query(None),
     db: Session = Depends(get_db),
     _: str = Depends(verify_token),
 ):
     q = db.query(Question)
-    if status:
-        q = q.filter(Question.status == status)
     if subject:
         q = q.filter(Question.subject == subject)
-    if upload_id:
-        q = q.filter(Question.upload_id == upload_id)
     return q.order_by(Question.created_at.desc()).all()
 
 
@@ -141,9 +71,19 @@ def update_question(
 ):
     q = db.query(Question).filter(Question.id == question_id).first()
     if not q:
-        raise HTTPException(status_code=404, detail="Pregunta no encontrada")
-    for field, value in body.model_dump(exclude_none=True).items():
-        setattr(q, field, value)
+        raise HTTPException(status_code=404, detail="Pregunta no encontrada.")
+
+    if body.subject is not None:
+        if body.subject not in SUBJECTS:
+            raise HTTPException(status_code=400, detail="Materia inválida.")
+        q.subject = body.subject
+
+    if body.correct_option is not None:
+        opt = body.correct_option.upper()
+        if opt not in OPTIONS:
+            raise HTTPException(status_code=400, detail="La respuesta correcta debe ser A, B, C o D.")
+        q.correct_option = opt
+
     db.commit()
     db.refresh(q)
     return q
@@ -157,6 +97,10 @@ def delete_question(
 ):
     q = db.query(Question).filter(Question.id == question_id).first()
     if not q:
-        raise HTTPException(status_code=404, detail="Pregunta no encontrada")
+        raise HTTPException(status_code=404, detail="Pregunta no encontrada.")
+    # Remove image file
+    img = UPLOADS_DIR / q.image_path
+    if img.exists():
+        img.unlink()
     db.delete(q)
     db.commit()

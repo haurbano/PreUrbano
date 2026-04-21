@@ -2,15 +2,18 @@ import json
 import os
 import anthropic
 
-SYSTEM_PROMPT = """Eres un generador de preguntas de práctica para el examen ICFES de Colombia.
-Analiza el contenido proporcionado y genera preguntas de selección múltiple en formato ICFES.
+SYSTEM_PROMPT = """Eres un extractor y generador de preguntas de práctica para el examen ICFES de Colombia.
+
+Tu tarea:
+1. Si el contenido ya contiene preguntas de selección múltiple, extráelas TODAS sin omitir ninguna.
+2. Si el contenido es material de estudio, genera preguntas ICFES a partir de él.
 
 Reglas:
 - Las preguntas deben estar en español
 - Cada pregunta tiene exactamente 4 opciones (A, B, C, D) con una única respuesta correcta
 - Detecta la materia automáticamente: matematicas, ciencias_naturales, lectura_critica, sociales, o ingles
 - Incluye una explicación breve de por qué la respuesta es correcta
-- Genera entre 3 y 15 preguntas según la riqueza del contenido
+- NO hay límite de preguntas: extrae o genera TODAS las que encuentres en el contenido
 - Los enunciados deben ser claros y autocontenidos
 
 Responde ÚNICAMENTE con un array JSON válido, sin texto adicional ni bloques de código:
@@ -22,31 +25,28 @@ def generate_questions(text: str, images_b64: list[str]) -> list[dict]:
 
     content: list = []
 
-    # Add images first if present
-    for img_b64 in images_b64[:5]:  # cap at 5 images per request
+    for img_b64 in images_b64:
         content.append({
             "type": "image",
             "source": {"type": "base64", "media_type": "image/png", "data": img_b64},
         })
 
-    # Add text if present
     if text.strip():
-        content.append({"type": "text", "text": text[:12000]})  # token safety cap
+        content.append({"type": "text", "text": text})
     elif not images_b64:
         return []
 
     if not content:
         return []
 
-    # Add instruction at end
     content.append({
         "type": "text",
-        "text": "Genera las preguntas ICFES basadas en el contenido anterior.",
+        "text": "Extrae o genera TODAS las preguntas ICFES del contenido anterior. No omitas ninguna.",
     })
 
     response = client.messages.create(
         model="claude-sonnet-4-6",
-        max_tokens=4096,
+        max_tokens=8192,
         system=SYSTEM_PROMPT,
         messages=[{"role": "user", "content": content}],
     )
