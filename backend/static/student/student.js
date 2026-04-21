@@ -64,8 +64,97 @@ function switchView(view) {
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.getElementById('view-' + view).classList.add('active');
   document.getElementById('nav-' + view).classList.add('active');
+  if (view === 'inicio')    loadHome();
   if (view === 'simulacro') loadSimIdle();
   if (view === 'progreso')  loadProgress();
+}
+
+async function loadHome() {
+  const c = document.getElementById('home-container');
+  if (!currentUser) return;
+
+  if (!currentUser.is_active) {
+    c.innerHTML = `
+      <div class="welcome-card">
+        <div><span class="status-dot" style="background:var(--red);box-shadow:none"></span><span class="status-label" style="color:#dc2626">Cuenta inactiva</span></div>
+        <p class="status-msg">Tu cuenta aún no ha sido activada. Contacta al equipo de PreUrbano.</p>
+      </div>`;
+    return;
+  }
+
+  c.innerHTML = '<div class="sim-empty">Cargando…</div>';
+  try {
+    const res = await fetch('/api/student/progress');
+    if (res.status === 401) { logout(); return; }
+    if (!res.ok) throw new Error();
+    renderHome(await res.json());
+  } catch {
+    c.innerHTML = '<div class="sim-empty">Error al cargar.</div>';
+  }
+}
+
+function renderHome(data) {
+  const c = document.getElementById('home-container');
+  const firstName = (currentUser.name || '').split(' ')[0];
+
+  if (data.total_simulations === 0) {
+    c.innerHTML = `
+      <div class="home-header">
+        <h1 class="home-greeting">Hola, ${firstName}</h1>
+        <p class="home-subtitle">¿Listo para tu primer simulacro?</p>
+      </div>
+      <div class="glass-card home-first-sim">
+        <div class="home-first-sim-icon">📝</div>
+        <h3>Comienza a practicar</h3>
+        <p>Haz tu primer simulacro ICFES y empieza a ver tu progreso.</p>
+        <button class="sim-start-btn" style="margin-top:20px" onclick="switchView('simulacro')">Iniciar simulacro</button>
+      </div>`;
+    return;
+  }
+
+  const avgPct = data.total_questions > 0
+    ? Math.round((data.total_correct / data.total_questions) * 100)
+    : 0;
+
+  const recentRows = data.simulations.slice(0, 5).map(s => {
+    const date = new Date(s.created_at).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' });
+    const scoreColor = s.score_pct >= 60 ? 'var(--green)' : 'var(--red)';
+    return `<div class="history-row">
+      <span class="history-date">${date}</span>
+      <span class="history-score" style="color:${scoreColor}">${s.score_pct}%</span>
+      <span class="history-detail">${s.correct_answers} correctas de ${s.total_questions}</span>
+    </div>`;
+  }).join('');
+
+  c.innerHTML = `
+    <div class="home-header">
+      <h1 class="home-greeting">Hola, ${firstName}</h1>
+    </div>
+    <div class="progress-cards home-stats">
+      <div class="progress-card">
+        <div class="progress-card-num">${data.total_simulations}</div>
+        <div class="progress-card-label">Simulacros completados</div>
+      </div>
+      <div class="progress-card">
+        <div class="progress-card-num" style="color:${avgPct >= 60 ? 'var(--green)' : 'var(--red)'}">${avgPct}%</div>
+        <div class="progress-card-label">Promedio global</div>
+      </div>
+      <div class="progress-card">
+        <div class="progress-card-num"><span style="color:var(--green)">${data.total_correct}</span> / <span style="color:var(--red)">${data.total_incorrect}</span></div>
+        <div class="progress-card-label">Correctas / Incorrectas</div>
+      </div>
+    </div>
+    <div class="home-bottom-grid">
+      <div class="glass-card home-next-sim">
+        <div class="home-section-label">Próximo Simulacro</div>
+        <h3 class="home-next-sim-title">Simulacro ICFES</h3>
+        <button class="sim-start-btn" onclick="switchView('simulacro')">Iniciar simulacro</button>
+      </div>
+      <div class="glass-card home-recent">
+        <div class="home-section-label">Actividad Reciente</div>
+        <div class="history-list">${recentRows}</div>
+      </div>
+    </div>`;
 }
 
 async function loadSimIdle() {
@@ -254,11 +343,8 @@ async function init() {
     if (!user.is_active) {
       document.getElementById('nav-simulacro').style.display = 'none';
       document.getElementById('nav-progreso').style.display  = 'none';
-      document.getElementById('view-inicio').querySelector('.status-label').textContent = 'Cuenta inactiva';
-      document.getElementById('view-inicio').querySelector('.status-msg').textContent   = 'Tu cuenta aún no ha sido activada. Contacta al equipo de PreUrbano.';
-      document.getElementById('view-inicio').querySelector('.status-dot').style.background  = 'var(--red)';
-      document.getElementById('view-inicio').querySelector('.status-dot').style.boxShadow   = 'none';
     }
+    loadHome();
   } catch { window.location.href = '/'; }
 }
 
@@ -267,6 +353,7 @@ Object.assign(window, {
   logout,
   switchView,
   saveProfile,
+  loadHome,
   startSim,
   selectOption,
   nextQuestion,

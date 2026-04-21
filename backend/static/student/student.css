@@ -113,6 +113,41 @@ sidebar {
 .status-msg   { font-size: 1rem; color: var(--text); margin-top: 12px; line-height: 1.6; }
 .status-sub   { font-size: 0.82rem; color: var(--muted); margin-top: 8px; }
 
+/* ── Inicio (home) ── */
+#home-container { display: flex; flex-direction: column; gap: 20px; max-width: 680px; }
+
+.home-header { margin-bottom: 4px; }
+.home-greeting { font-size: 1.8rem; font-weight: 700; color: var(--text); letter-spacing: -0.03em; margin: 0 0 4px; }
+.home-subtitle  { font-size: 0.9rem; color: var(--muted); margin: 0; }
+
+.home-stats { max-width: unset; }
+
+.home-bottom-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+.home-next-sim,
+.home-recent { padding: 24px; }
+
+.home-section-label {
+  font-size: 0.72rem; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.08em; color: var(--muted); margin-bottom: 14px;
+}
+
+.home-next-sim-title {
+  font-size: 1.1rem; font-weight: 700; color: var(--text); margin: 0 0 20px;
+}
+
+.home-first-sim {
+  padding: 32px; max-width: 480px; text-align: center;
+}
+.home-first-sim-icon { font-size: 2.5rem; margin-bottom: 12px; }
+.home-first-sim h3   { font-size: 1.1rem; font-weight: 700; color: var(--text); margin: 0 0 8px; }
+.home-first-sim p    { font-size: 0.88rem; color: var(--muted); margin: 0; }
+
+@media (max-width: 680px) {
+  .home-greeting    { font-size: 1.4rem; }
+  .home-bottom-grid { grid-template-columns: 1fr; }
+}
+
 /* ── Perfil ── */
 .profile-card {
   background: rgba(255, 255, 255, 0.7);
