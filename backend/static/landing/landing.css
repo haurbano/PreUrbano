@@ -107,6 +107,12 @@ nav .inner {
   background: rgba(255, 255, 255, 0.5);
 }
 .nav-right { display: flex; align-items: center; gap: 12px; }
+.nav-link {
+  font-size: 0.87rem; font-weight: 500; color: var(--muted);
+  text-decoration: none; transition: color 0.2s;
+}
+.nav-link:hover { color: var(--text); }
+.nav-link--active { color: var(--accent); font-weight: 600; }
 .btn-google {
   display: flex; align-items: center; gap: 8px;
   background: rgba(255, 255, 255, 0.65);
