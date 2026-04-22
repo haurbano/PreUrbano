@@ -1,7 +1,6 @@
 import { TOKEN_KEY, token, logout, showToast } from './shared.js';
 import { loadSubscribers } from './subscribers.js';
 import { loadUsers, openUserModal, toggleUser, closeModal } from './users.js';
-import { loadStudents, openStudentModal, closeStudentModal } from './students.js';
 import {
   setFile, updateSaveBtn, handleDragOver, handleDragLeave, handleDrop,
   saveQuestion, loadQuestions, handleQuestionRowClick,
@@ -43,7 +42,6 @@ export function switchView(view) {
   if (view === 'users')       loadUsers();
   if (view === 'banco')       loadQuestions();
   if (view === 'simconfig')   loadSimConfig();
-  if (view === 'students')    loadStudents();
 }
 
 export function backToQuestions() {
@@ -78,9 +76,6 @@ Object.assign(window, {
   deleteQuestionFromDetail,
   loadSimConfig,
   saveSimConfig,
-  loadStudents,
-  openStudentModal,
-  closeStudentModal,
   showToast,
 });
 

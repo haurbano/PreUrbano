@@ -20,7 +20,7 @@ export async function loadStudents() {
   const wrap = document.getElementById('table-students');
   wrap.innerHTML = '<p style="color:var(--muted);padding:16px">Cargando...</p>';
   try {
-    const res = await fetch('/students', { headers: { Authorization: `Bearer ${token()}` } });
+    const res = await fetch('/admin/students', { headers: { Authorization: `Bearer ${token()}` } });
     if (res.status === 401) { logout(); return; }
     const data = await res.json();
 
@@ -74,7 +74,7 @@ window.openStudentModal = async function(s) {
     <div class="modal-field"><span class="lbl">Último simulacro</span><span class="val">${s.last_sim_date ? new Date(s.last_sim_date).toLocaleString('es-CO') : '—'}</span></div>`;
 
   try {
-    const res = await fetch(`/students/${s.user_id}/simulations`, { headers: { Authorization: `Bearer ${token()}` } });
+    const res = await fetch(`/admin/students/${s.user_id}/simulations`, { headers: { Authorization: `Bearer ${token()}` } });
     if (res.status === 401) { logout(); return; }
     const simData = await res.json();
 

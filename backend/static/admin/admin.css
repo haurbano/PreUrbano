@@ -256,15 +256,14 @@ tbody tr.clickable { cursor: pointer; }
 .detail-btn.reject  { background: rgba(248,113,113,0.12); color: #f87171; border: 1px solid rgba(248,113,113,0.3); }
 .detail-btn.del     { background: transparent; color: var(--muted); border: 1px solid var(--border); }
 
-/* ── Students ── */
+/* ── User simulation info in modal ── */
 .student-score { font-weight: 700; }
 .student-score.high { color: var(--green); }
 .student-score.low  { color: var(--red); }
 
-/* ── Student detail modal ── */
-#student-modal { cursor: default; }
-#student-modal .modal { max-width: 600px; }
-.sim-summary-table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+#sim-list-modal { cursor: default; }
+#sim-list-modal .modal { max-width: 640px; }
+.sim-summary-table { width: 100%; border-collapse: collapse; margin-top: 12px; }
 .sim-summary-table th {
   text-align: left; font-size: 0.7rem; font-weight: 500; color: var(--muted);
   text-transform: uppercase; letter-spacing: 0.06em;
@@ -274,5 +273,5 @@ tbody tr.clickable { cursor: pointer; }
 .sim-summary-table tr:hover { background: rgba(255,255,255,0.02); }
 .sim-breakdown-cell { display: flex; gap: 6px; flex-wrap: wrap; }
 .bd-mini {
-  display: inline-block; font-size: 0.7rem; padding: 2px 7px; border-radius: 6px; font-weight: 500;
+  display: inline-block; font-size: 0.68rem; padding: 2px 6px; border-radius: 6px; font-weight: 500;
 }
