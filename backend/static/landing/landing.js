@@ -2,23 +2,26 @@
 const launchDate = new Date('2026-04-27T00:00:00');
 
 function updateCountdown() {
+  const daysEl    = document.getElementById('days');
+  const hoursEl   = document.getElementById('hours');
+  const minutesEl = document.getElementById('minutes');
+  const secondsEl = document.getElementById('seconds');
+  if (!daysEl) return;
+
   const now = new Date();
   const diff = launchDate - now;
   if (diff <= 0) {
-    document.getElementById('days').textContent = '00';
-    document.getElementById('hours').textContent = '00';
-    document.getElementById('minutes').textContent = '00';
-    document.getElementById('seconds').textContent = '00';
+    daysEl.textContent = hoursEl.textContent = minutesEl.textContent = secondsEl.textContent = '00';
     return;
   }
   const d = Math.floor(diff / 86400000);
   const h = Math.floor((diff % 86400000) / 3600000);
   const m = Math.floor((diff % 3600000) / 60000);
   const s = Math.floor((diff % 60000) / 1000);
-  document.getElementById('days').textContent    = String(d).padStart(2,'0');
-  document.getElementById('hours').textContent   = String(h).padStart(2,'0');
-  document.getElementById('minutes').textContent = String(m).padStart(2,'0');
-  document.getElementById('seconds').textContent = String(s).padStart(2,'0');
+  daysEl.textContent    = String(d).padStart(2,'0');
+  hoursEl.textContent   = String(h).padStart(2,'0');
+  minutesEl.textContent = String(m).padStart(2,'0');
+  secondsEl.textContent = String(s).padStart(2,'0');
 }
 updateCountdown();
 setInterval(updateCountdown, 1000);
