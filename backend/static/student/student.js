@@ -236,6 +236,7 @@ async function loadSimIdle() {
       questions: data.questions || [],
       currentIndex: 0,
       answers: [],
+      answered: [],
       timeLimitMinutes: data.time_limit_minutes || 0,
       started: false,
     };
@@ -256,6 +257,7 @@ function startSim() {
   if (!_sim || !_sim.questions.length) return;
   _sim.currentIndex = 0;
   _sim.answers = [];
+  _sim.answered = [];
   _sim.started = true;
   if (_sim.timeLimitMinutes > 0) {
     _timerSecondsLeft = _sim.timeLimitMinutes * 60;
@@ -272,9 +274,11 @@ function renderSimQuestion() {
   const pct     = ((current - 1) / total * 100).toFixed(0);
   const selected = _sim.answers[_sim.currentIndex];
   const isLast   = _sim.currentIndex === total - 1;
-  const opts = ['A', 'B', 'C', 'D'].map(opt =>
-    `<button class="sim-option-btn${selected === opt ? ' selected' : ''}" onclick="selectOption('${opt}')">${opt}</button>`
-  ).join('');
+  const isAnswered = _sim.answered[_sim.currentIndex];
+  const opts = ['A', 'B', 'C', 'D'].map(opt => {
+    const disabled = isAnswered ? ' disabled' : '';
+    return `<button class="sim-option-btn${selected === opt ? ' selected' : ''}" onclick="selectOption('${opt}')"${disabled}>${opt}</button>`
+  }).join('');
   const timerHtml = _sim.timeLimitMinutes > 0
     ? `<span class="sim-timer" id="sim-timer"></span>`
     : '';
@@ -290,11 +294,36 @@ function renderSimQuestion() {
     <div class="sim-options">${opts}</div>
     <button class="sim-nav-btn" onclick="${isLast ? 'submitSim()' : 'nextQuestion()'}">${isLast ? 'Entregar simulacro' : 'Siguiente'}</button>`;
   if (_sim.timeLimitMinutes > 0) updateTimerDisplay();
+  if (isAnswered) {
+    const correct = q.correct_option;
+    const wasCorrect = selected === correct;
+    showFeedback(wasCorrect ? 'correct' : 'incorrect', wasCorrect ? '¡Correcto! 🎉' : `Incorrecto. Respuesta correcta: ${correct}`);
+  }
 }
 
 function selectOption(opt) {
-  _sim.answers[_sim.currentIndex] = opt;
+  const idx = _sim.currentIndex;
+  if (_sim.answered[idx]) return;
+  if (_sim.answers[idx]) return;
+  _sim.answers[idx] = opt;
+  _sim.answered[idx] = true;
+  const correct = _sim.questions[idx].correct_option;
+  showFeedback(opt === correct ? 'correct' : 'incorrect', opt === correct ? '¡Correcto! 🎉' : `Incorrecto. Respuesta correcta: ${correct}`);
   renderSimQuestion();
+}
+
+function showFeedback(type, message) {
+  const existing = document.getElementById('sim-feedback');
+  if (existing) {
+    existing.className = `sim-feedback ${type}`;
+    existing.textContent = message;
+    return;
+  }
+  const feedback = document.createElement('div');
+  feedback.id = 'sim-feedback';
+  feedback.className = `sim-feedback ${type}`;
+  feedback.textContent = message;
+  document.querySelector('.sim-options').appendChild(feedback);
 }
 
 function nextQuestion() {

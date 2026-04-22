@@ -107,6 +107,7 @@ class QuestionForSim(BaseModel):
     id: int
     subject: str
     image_path: str
+    correct_option: str
 
 
 class SimulationStartOut(BaseModel):

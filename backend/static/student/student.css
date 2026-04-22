@@ -377,6 +377,20 @@ sidebar {
 }
 .nav-warn-confirm:hover { background: #b91c1c; }
 
+/* ── Feedback inline ── */
+.sim-feedback {
+  text-align: center;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.88rem;
+  margin-top: 10px;
+}
+.sim-feedback.correct { background: rgba(16,185,129,0.1); color: #059669; }
+.sim-feedback.incorrect { background: rgba(239,68,68,0.1); color: #dc2626; }
+
+.sim-option-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
 /* ── Timed-out result banner ── */
 .sim-timeout-banner {
   background: rgba(220, 38, 38, 0.08); border: 1px solid rgba(220, 38, 38, 0.2);

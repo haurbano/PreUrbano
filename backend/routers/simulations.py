@@ -80,7 +80,7 @@ def start_simulation(
         warning = f"Solo hay {total_available} preguntas disponibles."
 
     questions_out = [
-        QuestionForSim(id=q.id, subject=q.subject, image_path=q.image_path)
+        QuestionForSim(id=q.id, subject=q.subject, image_path=q.image_path, correct_option=q.correct_option)
         for q in all_questions
     ]
 
