@@ -12,6 +12,8 @@ const SUBJECT_LABELS = {
   ingles: 'Inglés',
 };
 
+const SUBJECTS = ['matematicas', 'ciencias_naturales', 'lectura_critica', 'sociales', 'ingles'];
+
 function logout() {
   window.location.href = '/auth/logout';
 }
