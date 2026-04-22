@@ -140,6 +140,14 @@ def submit_simulation(
     db.add(result)
     db.commit()
 
+    user_results = db.query(SimulationResult).filter(
+        SimulationResult.user_id == user_id
+    ).order_by(SimulationResult.created_at.desc()).all()
+    if len(user_results) > 10:
+        for r in user_results[10:]:
+            db.delete(r)
+        db.commit()
+
     return SimulationSubmitOut(
         score=score,
         total=total,
@@ -160,6 +168,7 @@ def get_student_progress(
         db.query(SimulationResult)
         .filter(SimulationResult.user_id == user_id)
         .order_by(SimulationResult.created_at.desc())
+        .limit(10)
         .all()
     )
 

@@ -14,6 +14,9 @@ from schemas import (
     SimulationConfigUpdate,
     SimulationHistoryOut,
     SimulationResultOut,
+    StudentsListOut,
+    StudentSimulationsOut,
+    StudentSimulationSummary,
 )
 from auth import create_token, verify_token, ADMIN_PASSWORD
 
@@ -139,3 +142,76 @@ def list_simulations(
         page_size=page_size,
         pages=pages,
     )
+
+
+@router.get("/students", response_model=StudentsListOut)
+def list_students(
+    db: Session = Depends(get_db),
+    _: str = Depends(verify_token),
+):
+    users = db.query(User).order_by(User.created_at.desc()).all()
+    items = []
+    for user in users:
+        results = (
+            db.query(SimulationResult)
+            .filter(SimulationResult.user_id == user.id)
+            .order_by(SimulationResult.created_at.desc())
+            .limit(10)
+            .all()
+        )
+        total_sim = len(results)
+        total_questions = sum(r.total_questions for r in results)
+        total_correct = sum(r.correct_answers for r in results)
+        avg_score = 0
+        if results:
+            avg_score = round(sum(r.correct_answers / r.total_questions * 100 for r in results if r.total_questions) / len(results))
+        last_sim_date = results[0].created_at if results else None
+        by_subject: dict[str, dict[str, int]] = {}
+        for r in results:
+            for subject, bd in (r.breakdown or {}).items():
+                agg = by_subject.setdefault(subject, {"correct": 0, "total": 0})
+                agg["correct"] += bd.get("correct", 0)
+                agg["total"] += bd.get("total", 0)
+        items.append({
+            "user_id": user.id,
+            "name": user.name,
+            "email": user.email,
+            "picture": user.picture,
+            "is_active": user.is_active,
+            "total_simulations": total_sim,
+            "avg_score": avg_score,
+            "total_correct": total_correct,
+            "total_questions": total_questions,
+            "last_sim_date": last_sim_date,
+            "by_subject": by_subject,
+        })
+    return StudentsListOut(items=items, total=len(items))
+
+
+@router.get("/students/{user_id}/simulations", response_model=StudentSimulationsOut)
+def get_student_simulations(
+    user_id: int,
+    db: Session = Depends(get_db),
+    _: str = Depends(verify_token),
+):
+    results = (
+        db.query(SimulationResult)
+        .filter(SimulationResult.user_id == user_id)
+        .order_by(SimulationResult.created_at.desc())
+        .limit(10)
+        .all()
+    )
+    items = []
+    for r in results:
+        score_pct = round((r.correct_answers / r.total_questions) * 100) if r.total_questions else 0
+        items.append(StudentSimulationSummary(
+            id=r.id,
+            created_at=r.created_at,
+            total_questions=r.total_questions,
+            correct_answers=r.correct_answers,
+            incorrect_answers=r.total_questions - r.correct_answers,
+            score_pct=score_pct,
+            breakdown=r.breakdown or {},
+            timed_out=r.timed_out,
+        ))
+    return StudentSimulationsOut(items=items, total=len(items))

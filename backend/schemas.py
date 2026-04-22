@@ -144,6 +144,41 @@ class SubjectBreakdown(BaseModel):
     total: int
 
 
+class StudentSimulationSummary(BaseModel):
+    id: int
+    created_at: datetime
+    total_questions: int
+    correct_answers: int
+    incorrect_answers: int
+    score_pct: int
+    breakdown: dict
+    timed_out: bool
+
+
+class StudentSimulationsOut(BaseModel):
+    items: list[StudentSimulationSummary]
+    total: int
+
+
+class StudentAdminOut(BaseModel):
+    user_id: int
+    name: str
+    email: str
+    picture: str | None
+    is_active: bool
+    total_simulations: int
+    avg_score: int
+    total_correct: int
+    total_questions: int
+    last_sim_date: datetime | None
+    by_subject: dict[str, SubjectBreakdown]
+
+
+class StudentsListOut(BaseModel):
+    items: list[StudentAdminOut]
+    total: int
+
+
 class SimulationHistoryOut(BaseModel):
     items: list[SimulationResultOut]
     total: int

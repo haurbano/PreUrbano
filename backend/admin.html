@@ -80,6 +80,12 @@
         </svg>
         Simulaciones
       </button>
+      <button class="nav-item" id="nav-students" onclick="switchView('students')">
+        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+        </svg>
+        Estudiantes
+      </button>
     </sidebar>
 
     <div class="content">
@@ -231,6 +237,45 @@
           </div>
           <button class="btn" id="sim-save-btn" onclick="saveSimConfig()">Guardar configuración</button>
           <div class="form-msg" id="sim-config-msg"></div>
+        </div>
+      </div>
+
+<!-- Vista: Students -->
+      <div class="view" id="view-students">
+        <div class="stats-row">
+          <div class="stat-card">
+            <div class="num" id="stat-students-total">—</div>
+            <div class="lbl">Estudiantes</div>
+          </div>
+          <div class="stat-card">
+            <div class="num" id="stat-students-active">—</div>
+            <div class="lbl">Activos</div>
+          </div>
+          <div class="stat-card">
+            <div class="num" id="stat-students-sim">—</div>
+            <div class="lbl">Con simulacros</div>
+          </div>
+        </div>
+        <div class="section-header">
+          <h2>Estudiantes</h2>
+          <button class="refresh-btn" onclick="loadStudents()">↻ Actualizar</button>
+        </div>
+        <div id="table-students"></div>
+      </div>
+
+      <!-- Student detail modal -->
+      <div class="modal-overlay hidden" id="student-modal" onclick="if(event.target===this)closeStudentModal()">
+        <div class="modal" onclick="event.stopPropagation()">
+          <button class="modal-close" onclick="document.getElementById('student-modal').classList.add('hidden')">✕</button>
+          <div class="modal-header">
+            <div id="smodal-avatar"></div>
+            <div>
+              <div class="modal-name" id="smodal-name"></div>
+              <div class="modal-email" id="smodal-email"></div>
+            </div>
+          </div>
+          <div class="modal-fields" id="smodal-stats"></div>
+          <div id="smodal-simulations"></div>
         </div>
       </div>
 
