@@ -10,9 +10,11 @@ export async function loadUsers() {
       fetch('/admin/users', { headers: { Authorization: `Bearer ${token()}` } }),
       fetch('/admin/students', { headers: { Authorization: `Bearer ${token()}` } }),
     ]);
+    console.log('students status:', studentsRes.status);
     if (usersRes.status === 401 || studentsRes.status === 401) { logout(); return; }
     const users = await usersRes.json();
     const studentsData = await studentsRes.json();
+    console.log('students data:', studentsData.total, 'items');
     const studentsMap = {};
     for (const s of studentsData.items) studentsMap[s.user_id] = s;
 
