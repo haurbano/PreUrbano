@@ -10,13 +10,14 @@ export async function loadUsers() {
       fetch('/admin/users', { headers: { Authorization: `Bearer ${token()}` } }),
       fetch('/admin/students', { headers: { Authorization: `Bearer ${token()}` } }),
     ]);
-    console.log('students status:', studentsRes.status);
+    console.log('[DEBUG] users status:', usersRes.status, 'students status:', studentsRes.status);
     if (usersRes.status === 401 || studentsRes.status === 401) { logout(); return; }
     const users = await usersRes.json();
     const studentsData = await studentsRes.json();
-    console.log('students data:', studentsData.total, 'items');
+    console.log('[DEBUG] users count:', users.length, 'students total:', studentsData.total);
     const studentsMap = {};
     for (const s of studentsData.items) studentsMap[s.user_id] = s;
+    console.log('[DEBUG] studentsMap keys:', Object.keys(studentsMap));
 
     document.getElementById('stat-users-total').textContent  = users.length;
     document.getElementById('stat-users-active').textContent = users.filter(u => u.is_active).length;
@@ -56,6 +57,7 @@ export async function loadUsers() {
 
 export function openUserModal(u, simData = {}) {
   currentModalUser = { ...u, simData };
+  console.log('[DEBUG] openUserModal called with simData:', simData);
   const empty = '<span class="val-empty">Sin completar</span>';
   document.getElementById('modal-avatar').innerHTML = u.picture
     ? `<img class="modal-avatar" src="${u.picture}" referrerpolicy="no-referrer" />`
@@ -68,7 +70,9 @@ export function openUserModal(u, simData = {}) {
   document.getElementById('modal-created').textContent = new Date(u.created_at).toLocaleString('es-CO');
 
   const simSection = document.getElementById('modal-sim-section');
+  console.log('[DEBUG] simSection element:', simSection, 'simData.total_simulations:', simData?.total_simulations);
   if (simData && simData.total_simulations > 0) {
+    console.log('[DEBUG] Rendering sim section with data:', simData);
     const scoreClass = simData.avg_score >= 60 ? 'high' : 'low';
     simSection.style.display = 'block';
     simSection.innerHTML = `
@@ -81,6 +85,7 @@ export function openUserModal(u, simData = {}) {
       </div>
       <button class="btn" style="margin-top:16px;width:100%;background:rgba(108,99,255,0.15);color:var(--accent);border:1px solid rgba(108,99,255,0.3)" onclick="openStudentSimulations(${u.id}, '${u.name}')">Ver últimos simulacros →</button>`;
   } else {
+    console.log('[DEBUG] Hiding sim section - no simulations');
     simSection.style.display = 'none';
   }
 
