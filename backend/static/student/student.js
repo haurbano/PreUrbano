@@ -225,12 +225,63 @@ function updateTimerDisplay() {
 async function loadSimIdle() {
   stopTimer();
   _sim = null;
+  renderSimConfig();
+}
+
+function renderSimConfig() {
   const c = document.getElementById('sim-container');
-  c.innerHTML = '<div class="sim-empty">Cargando…</div>';
+  const subjectOptions = SUBJECTS.map(key => {
+    const label = SUBJECT_LABELS[key];
+    return `<label class="sim-subject-toggle">
+      <input type="checkbox" value="${key}" checked />
+      <span class="sim-toggle-label">${label}</span>
+    </label>`;
+  }).join('');
+
+  c.innerHTML = `
+    <div class="sim-config-screen">
+      <h2>Simulacro ICFES</h2>
+      <p class="sim-config-subtitle">Elige las materias y la cantidad de preguntas</p>
+      <div class="sim-subject-toggles">${subjectOptions}</div>
+      <div class="sim-total-row">
+        <label class="sim-total-label">Preguntas:</label>
+        <select id="sim-total-select">
+          <option value="5">5</option>
+          <option value="10">10</option>
+          <option value="15">15</option>
+          <option value="20" selected>20</option>
+          <option value="25">25</option>
+          <option value="30">30</option>
+        </select>
+      </div>
+      <button class="sim-start-btn" onclick="startSim()">Iniciar simulacro</button>
+    </div>`;
+}
+
+async function startSim() {
+  const selectedSubjects = Array.from(
+    document.querySelectorAll('.sim-subject-toggle input:checked')
+  ).map(el => el.value);
+
+  if (selectedSubjects.length === 0) {
+    alert('Selecciona al menos una materia.');
+    return;
+  }
+
+  const totalQuestions = parseInt(document.getElementById('sim-total-select').value, 10);
+
+  const c = document.getElementById('sim-container');
+  c.innerHTML = '<div class="sim-empty">Cargando preguntas...</div>';
+
   try {
-    const res = await fetch('/api/simulation/start', { method: 'POST' });
+    const res = await fetch('/api/simulation/start', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ subjects: selectedSubjects, total_questions: totalQuestions }),
+    });
     if (res.status === 401) { logout(); return; }
     const data = await res.json();
+
     _sim = {
       simulationId: data.simulation_id,
       questions: data.questions || [],
@@ -240,30 +291,24 @@ async function loadSimIdle() {
       timeLimitMinutes: data.time_limit_minutes || 0,
       started: false,
     };
-    renderSimIdle(data.total_available || 0);
-  } catch { renderSimIdle(0); }
-}
 
-function renderSimIdle(total) {
-  const c = document.getElementById('sim-container');
-  if (total === 0) {
-    c.innerHTML = `<h2>Simulacro ICFES</h2><p class="sub">Prueba tus conocimientos con preguntas reales.</p><div class="sim-empty">No hay preguntas disponibles aún. Vuelve pronto.</div>`;
-    return;
-  }
-  c.innerHTML = `<h2>Simulacro ICFES</h2><p class="sub">${total} pregunta${total !== 1 ? 's' : ''} disponible${total !== 1 ? 's' : ''}.</p><button class="sim-start-btn" onclick="startSim()">Iniciar simulacro</button>`;
-}
+    if (!_sim.questions.length) {
+      c.innerHTML = `<h2>Simulacro ICFES</h2><p class="sub">No hay preguntas disponibles para la selección elegida.</p><button class="sim-start-btn" style="margin-top:16px" onclick="loadSimIdle()">Volver</button>`;
+      return;
+    }
 
-function startSim() {
-  if (!_sim || !_sim.questions.length) return;
-  _sim.currentIndex = 0;
-  _sim.answers = [];
-  _sim.answered = [];
-  _sim.started = true;
-  if (_sim.timeLimitMinutes > 0) {
-    _timerSecondsLeft = _sim.timeLimitMinutes * 60;
-    startTimer();
+    _sim.currentIndex = 0;
+    _sim.answers = [];
+    _sim.answered = [];
+    _sim.started = true;
+    if (_sim.timeLimitMinutes > 0) {
+      _timerSecondsLeft = _sim.timeLimitMinutes * 60;
+      startTimer();
+    }
+    renderSimQuestion();
+  } catch {
+    c.innerHTML = `<p class="sim-empty" style="color:var(--red)">Error al cargar preguntas.</p><button class="sim-start-btn" style="margin-top:16px" onclick="loadSimIdle()">Volver</button>`;
   }
-  renderSimQuestion();
 }
 
 function renderSimQuestion() {

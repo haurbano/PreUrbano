@@ -124,6 +124,11 @@ class SimulationAnswerIn(BaseModel):
     selected_option: str
 
 
+class SimulationStartIn(BaseModel):
+    subjects: list[str] | None = None
+    total_questions: int | None = None
+
+
 class SimulationSubmitIn(BaseModel):
     simulation_id: str
     answers: list[dict]

@@ -11,6 +11,7 @@ from schemas import (
     SimulationSubmitOut,
     QuestionForSim,
     StudentProgressOut,
+    SimulationStartIn,
 )
 from auth import verify_user_token_cookie
 
@@ -34,6 +35,7 @@ DEFAULT_CONFIG = {
 
 @router.post("/simulation/start", response_model=SimulationStartOut)
 def start_simulation(
+    body: SimulationStartIn | None = None,
     token_data: dict = Depends(verify_user_token_cookie),
     db: Session = Depends(get_db),
 ):
@@ -49,11 +51,15 @@ def start_simulation(
         db.commit()
         db.refresh(config)
 
+    subjects = body.subjects if body and body.subjects else SUBJECTS
+    total_target = body.total_questions if body and body.total_questions else config.questions_per_simulation
+
     limits = config.subject_limits
-    total_target = config.questions_per_simulation
 
     all_questions = []
     for subject in SUBJECTS:
+        if subject not in subjects:
+            continue
         limit = limits.get(subject, 0)
         if limit > 0:
             subject_qs = (

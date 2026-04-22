@@ -225,6 +225,21 @@ sidebar {
 .sim-card h2   { font-size: 1rem; font-weight: 600; color: var(--text); margin-bottom: 4px; }
 .sim-card .sub { font-size: 0.82rem; color: var(--muted); margin-bottom: 24px; }
 
+.sim-config-screen { text-align: center; max-width: 400px; margin: 0 auto; }
+.sim-config-screen h2 { font-size: 1.2rem; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+.sim-config-subtitle { font-size: 0.85rem; color: var(--muted); margin-bottom: 24px; }
+.sim-subject-toggles { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
+.sim-subject-toggle { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+.sim-subject-toggle input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--accent); cursor: pointer; }
+.sim-toggle-label { font-size: 0.9rem; color: var(--text); }
+.sim-total-row { display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 24px; }
+.sim-total-label { font-size: 0.85rem; color: var(--muted); }
+#sim-total-select {
+  background: rgba(255,255,255,0.6); border: 1px solid rgba(0,0,0,0.1); border-radius: 8px;
+  padding: 8px 12px; font-family: 'Inter', sans-serif; font-size: 0.9rem; color: var(--text); cursor: pointer; outline: none;
+}
+#sim-total-select:focus { border-color: rgba(108,99,255,0.5); }
+
 .sim-start-btn {
   display: block; width: 100%; background: #1c1c2e; color: #fff; border: none;
   border-radius: 14px; padding: 16px; font-family: 'Inter', sans-serif;
