@@ -63,6 +63,7 @@ class QuestionOut(BaseModel):
     subject: str
     correct_option: str
     image_path: str
+    group_id: int | None = None
     created_at: datetime
 
     model_config = {"from_attributes": True}
@@ -71,6 +72,33 @@ class QuestionOut(BaseModel):
 class QuestionUpdate(BaseModel):
     subject: str | None = None
     correct_option: str | None = None
+    group_id: int | None = None  # None + in model_fields_set → unassign
+
+
+class QuestionGroupCreate(BaseModel):
+    name: str | None = None
+    subject: str
+
+
+class QuestionGroupOut(BaseModel):
+    id: int
+    name: str | None
+    subject: str
+    created_at: datetime
+    question_count: int
+
+    model_config = {"from_attributes": True}
+
+
+class QuestionGroupDetail(BaseModel):
+    id: int
+    name: str | None
+    subject: str
+    created_at: datetime
+    question_count: int
+    questions: list[QuestionOut]
+
+    model_config = {"from_attributes": True}
 
 
 class UserEnableUpdate(BaseModel):
@@ -108,6 +136,7 @@ class QuestionForSim(BaseModel):
     subject: str
     image_path: str
     correct_option: str
+    group_id: int | None = None
 
 
 class SimulationStartOut(BaseModel):

@@ -31,6 +31,17 @@ class User(Base):
     )
 
 
+class QuestionGroup(Base):
+    __tablename__ = "question_groups"
+
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    name: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    subject: Mapped[str] = mapped_column(String(50), index=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
+    )
+
+
 class Question(Base):
     __tablename__ = "questions"
 
@@ -38,6 +49,9 @@ class Question(Base):
     subject: Mapped[str] = mapped_column(String(50), index=True)
     correct_option: Mapped[str] = mapped_column(String(1))  # A|B|C|D
     image_path: Mapped[str] = mapped_column(String(255))
+    group_id: Mapped[int | None] = mapped_column(
+        Integer, ForeignKey("question_groups.id", ondelete="SET NULL"), nullable=True, index=True
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
     )

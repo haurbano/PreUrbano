@@ -2,7 +2,6 @@ import uuid
 import random
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
-from sqlalchemy import func
 from database import get_db
 from models import Question, SimulationConfig, SimulationResult
 from schemas import (
@@ -56,22 +55,41 @@ def start_simulation(
 
     limits = config.subject_limits
 
-    all_questions = []
+    all_units: list[list] = []
     for subject in SUBJECTS:
         if subject not in subjects:
             continue
         limit = limits.get(subject, 0)
-        if limit > 0:
-            subject_qs = (
-                db.query(Question)
-                .filter(Question.subject == subject)
-                .order_by(func.random())
-                .limit(limit)
-                .all()
-            )
-            all_questions.extend(subject_qs)
+        if limit <= 0:
+            continue
 
-    if not all_questions:
+        subject_qs = db.query(Question).filter(Question.subject == subject).all()
+
+        groups_map: dict[int, list] = {}
+        singles = []
+        for q in subject_qs:
+            if q.group_id is not None:
+                groups_map.setdefault(q.group_id, []).append(q)
+            else:
+                singles.append(q)
+
+        for gid in groups_map:
+            groups_map[gid].sort(key=lambda q: q.id)
+
+        units = list(groups_map.values()) + [[q] for q in singles]
+        random.shuffle(units)
+
+        selected: list[list] = []
+        remaining = limit
+        for unit in units:
+            if len(unit) <= remaining:
+                selected.append(unit)
+                remaining -= len(unit)
+            if remaining == 0:
+                break
+        all_units.extend(selected)
+
+    if not all_units:
         return SimulationStartOut(
             simulation_id="",
             questions=[],
@@ -79,14 +97,19 @@ def start_simulation(
             warning="No hay preguntas disponibles.",
         )
 
-    random.shuffle(all_questions)
+    random.shuffle(all_units)
+    all_questions = [q for unit in all_units for q in unit]
+
     total_available = len(all_questions)
     warning = None
     if total_available < total_target:
         warning = f"Solo hay {total_available} preguntas disponibles."
 
     questions_out = [
-        QuestionForSim(id=q.id, subject=q.subject, image_path=q.image_path, correct_option=q.correct_option)
+        QuestionForSim(
+            id=q.id, subject=q.subject, image_path=q.image_path,
+            correct_option=q.correct_option, group_id=q.group_id,
+        )
         for q in all_questions
     ]
 

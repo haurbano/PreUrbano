@@ -5,6 +5,7 @@ import {
   setFile, updateSaveBtn, handleDragOver, handleDragLeave, handleDrop,
   saveQuestion, loadQuestions, handleQuestionRowClick,
   saveQuestionEdit, deleteQuestion, deleteQuestionFromDetail,
+  handleGroupSelectChange, saveGroupAssignment,
 } from './questions.js';
 import { loadSimConfig, saveSimConfig } from './simconfig.js';
 
@@ -74,6 +75,8 @@ Object.assign(window, {
   saveQuestionEdit,
   deleteQuestion,
   deleteQuestionFromDetail,
+  handleGroupSelectChange,
+  saveGroupAssignment,
   loadSimConfig,
   saveSimConfig,
   showToast,

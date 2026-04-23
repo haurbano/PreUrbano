@@ -4,8 +4,8 @@ from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, Q
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from database import get_db
-from models import Question
-from schemas import QuestionOut, QuestionUpdate
+from models import Question, QuestionGroup, SimulationConfig
+from schemas import QuestionOut, QuestionUpdate, QuestionGroupCreate, QuestionGroupOut, QuestionGroupDetail
 from auth import verify_token
 
 router = APIRouter()
@@ -102,9 +102,114 @@ def update_question(
             raise HTTPException(status_code=400, detail="La respuesta correcta debe ser A, B, C o D.")
         q.correct_option = opt
 
+    if "group_id" in body.model_fields_set:
+        if body.group_id is None:
+            q.group_id = None
+        else:
+            group = db.query(QuestionGroup).filter(QuestionGroup.id == body.group_id).first()
+            if not group:
+                raise HTTPException(status_code=404, detail="Grupo no encontrado.")
+            subject = body.subject if body.subject is not None else q.subject
+            if group.subject != subject:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"El grupo es de materia '{group.subject}' pero la pregunta es de '{subject}'."
+                )
+            # Count current group members, excluding this question if already in it
+            member_count = db.query(Question).filter(
+                Question.group_id == body.group_id,
+                Question.id != question_id,
+            ).count()
+            config = db.query(SimulationConfig).filter(SimulationConfig.id == 1).first()
+            limit = config.subject_limits.get(subject, 0) if config else 0
+            if limit > 0 and member_count + 1 > limit:
+                raise HTTPException(
+                    status_code=400,
+                    detail=(
+                        f"El grupo ya tiene {member_count} pregunta(s). "
+                        f"Agregar una más superaría el límite de {limit} para '{subject}'."
+                    )
+                )
+            q.group_id = body.group_id
+
     db.commit()
     db.refresh(q)
     return q
+
+
+@router.post("/questions/groups", response_model=QuestionGroupOut)
+def create_group(
+    body: QuestionGroupCreate,
+    db: Session = Depends(get_db),
+    _: str = Depends(verify_token),
+):
+    if body.subject not in SUBJECTS:
+        raise HTTPException(status_code=400, detail="Materia inválida.")
+    group = QuestionGroup(name=body.name, subject=body.subject)
+    db.add(group)
+    db.commit()
+    db.refresh(group)
+    return QuestionGroupOut(
+        id=group.id,
+        name=group.name,
+        subject=group.subject,
+        created_at=group.created_at,
+        question_count=0,
+    )
+
+
+@router.get("/questions/groups", response_model=list[QuestionGroupOut])
+def list_groups(
+    subject: str | None = Query(None),
+    db: Session = Depends(get_db),
+    _: str = Depends(verify_token),
+):
+    q = db.query(QuestionGroup)
+    if subject:
+        q = q.filter(QuestionGroup.subject == subject)
+    groups = q.order_by(QuestionGroup.created_at.desc()).all()
+    result = []
+    for g in groups:
+        count = db.query(Question).filter(Question.group_id == g.id).count()
+        result.append(QuestionGroupOut(
+            id=g.id, name=g.name, subject=g.subject, created_at=g.created_at, question_count=count
+        ))
+    return result
+
+
+@router.get("/questions/groups/{group_id}", response_model=QuestionGroupDetail)
+def get_group(
+    group_id: int,
+    db: Session = Depends(get_db),
+    _: str = Depends(verify_token),
+):
+    group = db.query(QuestionGroup).filter(QuestionGroup.id == group_id).first()
+    if not group:
+        raise HTTPException(status_code=404, detail="Grupo no encontrado.")
+    members = db.query(Question).filter(Question.group_id == group_id).order_by(Question.id).all()
+    return QuestionGroupDetail(
+        id=group.id,
+        name=group.name,
+        subject=group.subject,
+        created_at=group.created_at,
+        question_count=len(members),
+        questions=members,
+    )
+
+
+@router.delete("/questions/groups/{group_id}", status_code=204)
+def delete_group(
+    group_id: int,
+    db: Session = Depends(get_db),
+    _: str = Depends(verify_token),
+):
+    group = db.query(QuestionGroup).filter(QuestionGroup.id == group_id).first()
+    if not group:
+        raise HTTPException(status_code=404, detail="Grupo no encontrado.")
+    # Unassign all member questions
+    db.query(Question).filter(Question.group_id == group_id).update({"group_id": None})
+    db.delete(group)
+    db.commit()
 
 
 @router.delete("/questions/{question_id}", status_code=204)

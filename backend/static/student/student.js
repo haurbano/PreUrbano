@@ -329,12 +329,24 @@ function renderSimQuestion() {
   const timerHtml = _sim.timeLimitMinutes > 0
     ? `<span class="sim-timer" id="sim-timer"></span>`
     : '';
+
+  let groupBannerHtml = '';
+  if (q.group_id != null) {
+    const positions = _sim.questions
+      .map((gq, i) => gq.group_id === q.group_id ? i + 1 : null)
+      .filter(n => n !== null);
+    const gStart = positions[0];
+    const gEnd   = positions[positions.length - 1];
+    groupBannerHtml = `<div class="sim-group-banner">📎 Conjunto · Preguntas ${gStart}–${gEnd} de ${total}</div>`;
+  }
+
   c.innerHTML = `
     <div class="sim-progress">
       <div class="sim-progress-bar"><div class="sim-progress-fill" style="width:${pct}%"></div></div>
       <div class="sim-progress-text">${current} / ${total}</div>
       ${timerHtml}
     </div>
+    ${groupBannerHtml}
     <div class="sim-question-img-wrap">
       <img class="sim-question-img" src="/uploads/${q.image_path}" alt="Pregunta ${current}" />
     </div>

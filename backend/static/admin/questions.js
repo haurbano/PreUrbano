@@ -4,6 +4,8 @@ export let selectedFile = null;
 let _currentPage = 1;
 const _questionsCache = {};
 let _detailQuestion = null;
+let _simLimits = null;
+const _groupsCache = {};
 
 export function updateSaveBtn() {
   const ready = selectedFile &&
@@ -96,7 +98,10 @@ export async function loadQuestions(page) {
     const rows = data.items.map(q => `
       <tr class="clickable" onclick="handleQuestionRowClick(${q.id})">
         <td><img class="q-thumb" src="https://preurbano.com/uploads/${q.image_path}" /></td>
-        <td><span class="badge badge-${q.subject}">${subjectLabel(q.subject)}</span></td>
+        <td>
+          <span class="badge badge-${q.subject}">${subjectLabel(q.subject)}</span>
+          ${q.group_id ? '<span title="Parte de un conjunto" style="margin-left:4px">📎</span>' : ''}
+        </td>
         <td><span class="badge badge-option">${q.correct_option}</span></td>
         <td style="color:var(--muted)">${new Date(q.created_at).toLocaleDateString('es-CO')}</td>
         <td onclick="event.stopPropagation()">
@@ -132,6 +137,98 @@ function buildPagination(page, pages, total, pageSize) {
   return `<div class="pagination">${btns}</div>`;
 }
 
+async function fetchSimLimits() {
+  if (_simLimits) return _simLimits;
+  try {
+    const res = await fetch('/simulation/config', { headers: { Authorization: `Bearer ${token()}` } });
+    if (res.ok) { const d = await res.json(); _simLimits = d.subject_limits; }
+  } catch {}
+  return _simLimits || {};
+}
+
+async function loadGroupsForSubject(subject) {
+  try {
+    const res = await fetch(`/questions/groups?subject=${subject}`, { headers: { Authorization: `Bearer ${token()}` } });
+    if (res.ok) { const g = await res.json(); _groupsCache[subject] = g; return g; }
+  } catch {}
+  return [];
+}
+
+function populateGroupSelect(groups, currentGroupId, subject, limits) {
+  const sel = document.getElementById('edit-group');
+  if (!sel) return;
+  const limit = limits[subject] || 0;
+  sel.innerHTML = '<option value="">— Sin grupo —</option>';
+  groups.forEach(g => {
+    const isCurrent = g.id === currentGroupId;
+    const full = limit > 0 && g.question_count >= limit && !isCurrent;
+    const label = (g.name || `Grupo #${g.id}`) + (limit > 0 ? ` (${g.question_count}/${limit})` : ` (${g.question_count})`);
+    const opt = document.createElement('option');
+    opt.value = g.id;
+    opt.textContent = full ? label + ' – lleno' : label;
+    if (isCurrent) opt.selected = true;
+    if (full) opt.disabled = true;
+    sel.appendChild(opt);
+  });
+  const newOpt = document.createElement('option');
+  newOpt.value = '__new__';
+  newOpt.textContent = '+ Crear nuevo grupo';
+  sel.appendChild(newOpt);
+}
+
+export function handleGroupSelectChange() {
+  const val = document.getElementById('edit-group')?.value;
+  const row = document.getElementById('new-group-row');
+  if (row) row.style.display = val === '__new__' ? 'block' : 'none';
+}
+
+export async function saveGroupAssignment(questionId) {
+  const sel = document.getElementById('edit-group');
+  if (!sel) return;
+  const val = sel.value;
+  const btn = document.getElementById('group-save-btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Guardando…'; }
+
+  try {
+    let groupId = null;
+    if (val === '__new__') {
+      const name = document.getElementById('new-group-name')?.value.trim() || null;
+      const subject = _detailQuestion.subject;
+      const cr = await fetch('/questions/groups', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token()}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, subject }),
+      });
+      if (!cr.ok) { alert('Error al crear grupo.'); return; }
+      groupId = (await cr.json()).id;
+      _groupsCache[subject] = null;
+    } else if (val !== '') {
+      groupId = parseInt(val);
+    }
+
+    const body = groupId !== null ? { group_id: groupId } : { group_id: null };
+    const res = await fetch(`/questions/${questionId}`, {
+      method: 'PATCH',
+      headers: { Authorization: `Bearer ${token()}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    if (res.status === 401) { logout(); return; }
+    if (!res.ok) { const e = await res.json(); alert(e.detail || 'Error al asignar grupo.'); return; }
+
+    const updated = await res.json();
+    _detailQuestion = updated;
+    _questionsCache[questionId] = updated;
+    _groupsCache[updated.subject] = null;
+    const [groups, limits] = await Promise.all([loadGroupsForSubject(updated.subject), fetchSimLimits()]);
+    populateGroupSelect(groups, updated.group_id, updated.subject, limits);
+    const row = document.getElementById('new-group-row');
+    if (row) row.style.display = 'none';
+    showToast('✓ Grupo actualizado');
+  } catch { alert('Error de conexión.'); }
+
+  if (btn) { btn.disabled = false; btn.textContent = 'Asignar'; }
+}
+
 export function handleQuestionRowClick(id) {
   const q = _questionsCache[id];
   if (q) openQuestionDetail(q);
@@ -142,13 +239,14 @@ export function openQuestionDetail(q) {
 
   document.getElementById('detail-meta').innerHTML =
     `<span class="badge badge-${q.subject}">${subjectLabel(q.subject)}</span>` +
-    `<span class="badge badge-option">Respuesta correcta: ${q.correct_option}</span>`;
+    `<span class="badge badge-option">Respuesta correcta: ${q.correct_option}</span>` +
+    (q.group_id ? `<span class="badge" style="background:var(--blue,#3b82f6);color:#fff">📎 Conjunto</span>` : '');
 
   document.getElementById('detail-image').src = `https://preurbano.com/uploads/${q.image_path}`;
 
   document.getElementById('detail-actions').innerHTML = `
-    <div style="display:flex;flex-direction:column;gap:14px">
-      <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">
+    <div style="display:flex;flex-direction:column;gap:18px">
+      <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end">
         <div>
           <div style="font-size:0.72rem;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em">Materia</div>
           <select id="edit-subject" class="edit-select">
@@ -173,12 +271,33 @@ export function openQuestionDetail(q) {
         <button class="detail-btn approve" onclick="saveQuestionEdit(${q.id})">Guardar cambios</button>
         <button class="detail-btn del" onclick="deleteQuestionFromDetail(${q.id})">🗑 Eliminar</button>
       </div>
+
+      <div style="border-top:1px solid var(--border,#e5e7eb);padding-top:16px">
+        <div style="font-size:0.72rem;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.06em">Conjunto de preguntas</div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <select id="edit-group" class="edit-select" onchange="handleGroupSelectChange()" style="min-width:220px">
+            <option value="">Cargando grupos…</option>
+          </select>
+          <button id="group-save-btn" class="detail-btn approve" onclick="saveGroupAssignment(${q.id})" style="padding:7px 14px">Asignar</button>
+        </div>
+        <div id="new-group-row" style="display:none;margin-top:10px">
+          <input type="text" id="new-group-name" class="edit-select" placeholder="Nombre del conjunto (opcional)" style="width:100%;box-sizing:border-box" />
+        </div>
+      </div>
     </div>`;
 
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.getElementById('view-question-detail').classList.add('active');
   document.getElementById('nav-banco').classList.add('active');
+
+  // Load groups asynchronously after rendering
+  Promise.all([
+    _groupsCache[q.subject] ? Promise.resolve(_groupsCache[q.subject]) : loadGroupsForSubject(q.subject),
+    fetchSimLimits(),
+  ]).then(([groups, limits]) => {
+    populateGroupSelect(groups, q.group_id, q.subject, limits);
+  });
 }
 
 export async function saveQuestionEdit(id) {

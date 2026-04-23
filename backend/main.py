@@ -5,6 +5,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
+from sqlalchemy import text
 from database import engine, Base
 from routers import subscribe, admin
 from routers import auth as auth_router
@@ -12,6 +13,15 @@ from routers import questions as questions_router
 from routers import simulations as sim_router
 
 Base.metadata.create_all(bind=engine)
+
+with engine.connect() as _conn:
+    try:
+        _conn.execute(text(
+            "ALTER TABLE questions ADD COLUMN group_id INTEGER REFERENCES question_groups(id)"
+        ))
+        _conn.commit()
+    except Exception:
+        pass  # column already exists
 
 app = FastAPI(title="PreUrbano API", docs_url=None, redoc_url=None)
 
