@@ -4,15 +4,26 @@
 
 ### Admin
 
-- [ ] **Simulacros curados por el admin** *(pendiente de definición — ver preguntas abiertas abajo)*
-  El admin arma manualmente un simulacro eligiendo pregunta por pregunta cuáles van, en vez de la selección aleatoria actual. Los estudiantes toman ese simulacro curado.
+- [ ] **Simulacros curados por el admin**
 
-  **Preguntas abiertas antes de planear:**
-  - ¿Puede haber múltiples simulacros activos al mismo tiempo, o solo uno activo que el admin reemplaza?
-  - ¿El estudiante elige qué simulacro hacer (si hay varios), o siempre toma el activo?
-  - ¿Un simulacro curado reemplaza la selección aleatoria, o coexisten (curado + aleatorio)?
-  - ¿Las preguntas del simulacro curado se muestran en un orden fijo (el que el admin definió) o se mezclan?
-  - ¿El simulacro curado tiene límite de intentos o el estudiante puede repetirlo?
+  El admin arma manualmente simulacros eligiendo y ordenando preguntas del banco. Solo uno puede estar activo a la vez; los estudiantes ven tanto el simulacro activo como la práctica libre.
+
+  **Comportamiento admin:**
+  - Puede crear y editar múltiples simulacros (con nombre, lista de preguntas ordenada)
+  - Solo uno puede marcarse como "activo" — activar uno desactiva el anterior
+  - Puede ver historial de simulacros anteriores y sus resultados
+
+  **Comportamiento estudiante:**
+  - El modo actual (aleatorio) se renombra a **"Práctica"**
+  - Aparece una nueva sección **"Simulacro"** cuando hay uno activo
+  - Si no hay simulacro activo, solo se ve "Práctica"
+  - El estudiante puede hacer el simulacro activo **solo una vez** — después ve su resultado pero no puede repetirlo
+  - Si el admin activa un simulacro nuevo (distinto), el estudiante puede tomar el nuevo
+
+  **Modelo de datos:**
+  - `Simulacro`: id, name, is_active, created_at
+  - `SimulacroQuestion`: simulacro_id FK, question_id FK, order (int) — define el orden fijo
+  - `SimulacroResult`: simulacro_id FK, user_id FK — unique constraint para el "solo una vez"; guarda score, breakdown, created_at
 
 - [x] **Habilitar y restringir usuarios por correo**
   En el panel admin, poder aprobar o bloquear usuarios individuales por su dirección de correo. Los usuarios restringidos no pueden acceder aunque tengan cuenta.
