@@ -1,13 +1,13 @@
-import { TOKEN_KEY, token, logout, showToast } from './shared.js';
-import { loadSubscribers } from './subscribers.js';
-import { loadUsers, openUserModal, toggleUser, closeModal } from './users.js';
+import { TOKEN_KEY, token, logout, showToast } from './shared.js?v=2';
+import { loadSubscribers } from './subscribers.js?v=2';
+import { loadUsers, openUserModal, toggleUser, closeModal } from './users.js?v=2';
 import {
   setFile, updateSaveBtn, handleDragOver, handleDragLeave, handleDrop,
   saveQuestion, loadQuestions, handleQuestionRowClick,
   saveQuestionEdit, deleteQuestion, deleteQuestionFromDetail,
   handleGroupSelectChange, saveGroupAssignment,
-} from './questions.js';
-import { loadSimConfig, saveSimConfig } from './simconfig.js';
+} from './questions.js?v=2';
+import { loadSimConfig, saveSimConfig } from './simconfig.js?v=2';
 
 let currentView = 'subscribers';
 
