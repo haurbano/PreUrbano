@@ -4,6 +4,16 @@
 
 ### Admin
 
+- [ ] **Simulacros curados por el admin** *(pendiente de definición — ver preguntas abiertas abajo)*
+  El admin arma manualmente un simulacro eligiendo pregunta por pregunta cuáles van, en vez de la selección aleatoria actual. Los estudiantes toman ese simulacro curado.
+
+  **Preguntas abiertas antes de planear:**
+  - ¿Puede haber múltiples simulacros activos al mismo tiempo, o solo uno activo que el admin reemplaza?
+  - ¿El estudiante elige qué simulacro hacer (si hay varios), o siempre toma el activo?
+  - ¿Un simulacro curado reemplaza la selección aleatoria, o coexisten (curado + aleatorio)?
+  - ¿Las preguntas del simulacro curado se muestran en un orden fijo (el que el admin definió) o se mezclan?
+  - ¿El simulacro curado tiene límite de intentos o el estudiante puede repetirlo?
+
 - [ ] **Subir archivos para generar preguntas con IA**
   Permitir al admin subir archivos (PDF, imágenes, Word) desde el panel admin. El backend los analiza con IA (ej. Claude API) y los transforma en preguntas de práctica ICFES listas para agregar al banco de preguntas.
 

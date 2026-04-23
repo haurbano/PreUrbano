@@ -53,43 +53,29 @@ def start_simulation(
     subjects = body.subjects if body and body.subjects else SUBJECTS
     total_target = body.total_questions if body and body.total_questions else config.questions_per_simulation
 
-    limits = config.subject_limits
+    base_limits = config.subject_limits
+    selected_subjects = [s for s in SUBJECTS if s in subjects and base_limits.get(s, 0) > 0]
+    total_config = sum(base_limits.get(s, 0) for s in selected_subjects)
 
-    all_units: list[list] = []
+    # Scale per-subject limits if student requested fewer questions than the admin total
+    if total_config > 0 and total_target < total_config:
+        factor = total_target / total_config
+        limits = {s: max(1, int(base_limits[s] * factor)) for s in base_limits}
+    else:
+        limits = base_limits
+
+    all_questions = []
     for subject in SUBJECTS:
         if subject not in subjects:
             continue
         limit = limits.get(subject, 0)
         if limit <= 0:
             continue
-
         subject_qs = db.query(Question).filter(Question.subject == subject).all()
+        random.shuffle(subject_qs)
+        all_questions.extend(subject_qs[:limit])
 
-        groups_map: dict[int, list] = {}
-        singles = []
-        for q in subject_qs:
-            if q.group_id is not None:
-                groups_map.setdefault(q.group_id, []).append(q)
-            else:
-                singles.append(q)
-
-        for gid in groups_map:
-            groups_map[gid].sort(key=lambda q: q.id)
-
-        units = list(groups_map.values()) + [[q] for q in singles]
-        random.shuffle(units)
-
-        selected: list[list] = []
-        remaining = limit
-        for unit in units:
-            if len(unit) <= remaining:
-                selected.append(unit)
-                remaining -= len(unit)
-            if remaining == 0:
-                break
-        all_units.extend(selected)
-
-    if not all_units:
+    if not all_questions:
         return SimulationStartOut(
             simulation_id="",
             questions=[],
@@ -97,19 +83,14 @@ def start_simulation(
             warning="No hay preguntas disponibles.",
         )
 
-    random.shuffle(all_units)
-    all_questions = [q for unit in all_units for q in unit]
-
+    random.shuffle(all_questions)
     total_available = len(all_questions)
     warning = None
     if total_available < total_target:
         warning = f"Solo hay {total_available} preguntas disponibles."
 
     questions_out = [
-        QuestionForSim(
-            id=q.id, subject=q.subject, image_path=q.image_path,
-            correct_option=q.correct_option, group_id=q.group_id,
-        )
+        QuestionForSim(id=q.id, subject=q.subject, image_path=q.image_path, correct_option=q.correct_option)
         for q in all_questions
     ]
 
