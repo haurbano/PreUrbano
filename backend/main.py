@@ -11,6 +11,8 @@ from routers import subscribe, admin
 from routers import auth as auth_router
 from routers import questions as questions_router
 from routers import simulations as sim_router
+from routers import simulacros_admin as simulacros_admin_router
+from routers import simulacros_student as simulacros_student_router
 
 Base.metadata.create_all(bind=engine)
 
@@ -43,6 +45,8 @@ app.include_router(admin.router, prefix="/admin")
 app.include_router(auth_router.router, prefix="/auth")
 app.include_router(questions_router.router, prefix="/admin")
 app.include_router(sim_router.router, prefix="/api")
+app.include_router(simulacros_admin_router.router, prefix="/admin")
+app.include_router(simulacros_student_router.router, prefix="/api")
 
 # Serve uploaded files (images extracted from PDFs)
 _uploads_path = Path("/app/uploads")

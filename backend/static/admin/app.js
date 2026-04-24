@@ -1,13 +1,20 @@
-import { TOKEN_KEY, token, logout, showToast } from './shared.js?v=2';
-import { loadSubscribers } from './subscribers.js?v=2';
-import { loadUsers, openUserModal, toggleUser, closeModal } from './users.js?v=2';
+import { TOKEN_KEY, token, logout, showToast } from './shared.js?v=3';
+import { loadSubscribers } from './subscribers.js?v=3';
+import { loadUsers, openUserModal, toggleUser, closeModal } from './users.js?v=3';
 import {
   setFile, updateSaveBtn, handleDragOver, handleDragLeave, handleDrop,
   saveQuestion, loadQuestions, handleQuestionRowClick,
   saveQuestionEdit, deleteQuestion, deleteQuestionFromDetail,
   handleGroupSelectChange, saveGroupAssignment,
-} from './questions.js?v=2';
-import { loadSimConfig, saveSimConfig } from './simconfig.js?v=2';
+} from './questions.js?v=3';
+import { loadSimConfig, saveSimConfig } from './simconfig.js?v=3';
+import {
+  loadSimulacros, openSimulacroEditor, saveSimulacro,
+  activateSimulacro, deactivateSimulacro, deleteSimulacro,
+  addQuestionToSim, removeQuestionFromSim, moveQuestionInSim,
+  openSimulacroResults,
+  simChangeBancoSubject, simBancoPrevPage, simBancoNextPage,
+} from './simulacros.js?v=1';
 
 let currentView = 'subscribers';
 
@@ -43,6 +50,7 @@ export function switchView(view) {
   if (view === 'users')       loadUsers();
   if (view === 'banco')       loadQuestions();
   if (view === 'simconfig')   loadSimConfig();
+  if (view === 'simulacros')  loadSimulacros();
 }
 
 export function backToQuestions() {
@@ -80,6 +88,19 @@ Object.assign(window, {
   loadSimConfig,
   saveSimConfig,
   showToast,
+  loadSimulacros,
+  openSimulacroEditor,
+  saveSimulacro,
+  activateSimulacro,
+  deactivateSimulacro,
+  deleteSimulacro,
+  addQuestionToSim,
+  removeQuestionFromSim,
+  moveQuestionInSim,
+  openSimulacroResults,
+  simChangeBancoSubject,
+  simBancoPrevPage,
+  simBancoNextPage,
 });
 
 if (token()) showDashboard();

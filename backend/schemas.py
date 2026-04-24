@@ -1,5 +1,5 @@
 from datetime import datetime
-from pydantic import BaseModel, EmailStr, field_validator
+from pydantic import BaseModel, EmailStr, Field, field_validator
 
 
 class SubscribeRequest(BaseModel):
@@ -238,3 +238,96 @@ class StudentProgressOut(BaseModel):
     total_incorrect: int
     by_subject: dict[str, SubjectBreakdown]
     simulations: list[SimulationSummary]
+
+
+# ── Simulacros curados ────────────────────────────────────────────────────────
+
+class SimulacroCreate(BaseModel):
+    name: str = Field(..., max_length=150)
+    time_limit_minutes: int = 0
+    question_ids: list[int] = []
+
+    @field_validator("question_ids")
+    @classmethod
+    def no_duplicates(cls, v: list[int]) -> list[int]:
+        if len(v) != len(set(v)):
+            raise ValueError("No se permiten preguntas duplicadas.")
+        return v
+
+
+class SimulacroUpdate(BaseModel):
+    name: str | None = Field(None, max_length=150)
+    time_limit_minutes: int | None = None
+    question_ids: list[int] | None = None
+
+    @field_validator("question_ids")
+    @classmethod
+    def no_duplicates(cls, v: list[int] | None) -> list[int] | None:
+        if v is not None and len(v) != len(set(v)):
+            raise ValueError("No se permiten preguntas duplicadas.")
+        return v
+
+
+class SimulacroSummary(BaseModel):
+    id: int
+    name: str
+    is_active: bool
+    time_limit_minutes: int
+    question_count: int
+    attempts_count: int
+    created_at: datetime
+
+
+class SimulacroDetail(SimulacroSummary):
+    questions: list[QuestionOut]
+
+
+class SimulacroSubmitOut(BaseModel):
+    score: int
+    total: int
+    correct: int
+    incorrect: int
+    breakdown: dict
+    timed_out: bool = False
+
+
+class SimulacroAvailable(BaseModel):
+    available: bool
+    simulacro_id: int | None = None
+    name: str | None = None
+    question_count: int | None = None
+    time_limit_minutes: int | None = None
+    already_taken: bool = False
+    last_result: SimulacroSubmitOut | None = None
+
+
+class SimulacroStartOut(BaseModel):
+    simulacro_id: int
+    session_id: str
+    name: str
+    questions: list[QuestionForSim]
+    time_limit_minutes: int
+
+
+class SimulacroSubmitIn(BaseModel):
+    simulacro_id: int
+    session_id: str
+    answers: list[dict]
+    timed_out: bool = False
+
+
+class SimulacroResultAdminRow(BaseModel):
+    id: int
+    user_id: int
+    user_name: str
+    user_email: str
+    score: int
+    total_questions: int
+    correct_answers: int
+    timed_out: bool
+    created_at: datetime
+
+
+class SimulacroResultsAdminOut(BaseModel):
+    items: list[SimulacroResultAdminRow]
+    total: int

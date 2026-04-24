@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from sqlalchemy import Boolean, String, DateTime, Integer, ForeignKey, JSON
+from sqlalchemy import Boolean, String, DateTime, Integer, ForeignKey, JSON, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 from database import Base
 
@@ -76,6 +76,49 @@ class SimulationResult(Base):
     __tablename__ = "simulation_results"
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), index=True)
+    total_questions: Mapped[int]
+    correct_answers: Mapped[int]
+    breakdown: Mapped[dict] = mapped_column(JSON, default=dict)
+    timed_out: Mapped[bool] = mapped_column(Boolean, default=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
+    )
+
+
+class Simulacro(Base):
+    __tablename__ = "simulacros"
+
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    name: Mapped[str] = mapped_column(String(150))
+    is_active: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
+    time_limit_minutes: Mapped[int] = mapped_column(Integer, default=0)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
+    )
+
+
+class SimulacroQuestion(Base):
+    __tablename__ = "simulacro_questions"
+
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    simulacro_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("simulacros.id", ondelete="CASCADE"), index=True
+    )
+    question_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("questions.id", ondelete="CASCADE"), index=True
+    )
+    order: Mapped[int] = mapped_column(Integer)
+
+
+class SimulacroResult(Base):
+    __tablename__ = "simulacro_results"
+    __table_args__ = (UniqueConstraint("simulacro_id", "user_id", name="uq_simulacro_user"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    simulacro_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("simulacros.id", ondelete="CASCADE"), index=True
+    )
     user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), index=True)
     total_questions: Mapped[int]
     correct_answers: Mapped[int]

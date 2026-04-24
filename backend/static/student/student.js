@@ -2,6 +2,9 @@ let currentUser = null;
 let _sim = null;
 let _timerInterval = null;
 let _timerSecondsLeft = 0;
+let _curado = null;
+let _curadoTimerInterval = null;
+let _curadoTimerSecondsLeft = 0;
 let _pendingNavView = null;
 
 const SUBJECT_LABELS = {
@@ -73,11 +76,16 @@ function _realSwitchView(view) {
   document.getElementById('nav-' + view).classList.add('active');
   if (view === 'inicio')    loadHome();
   if (view === 'simulacro') loadSimIdle();
+  if (view === 'curado')    loadCuradoIdle();
   if (view === 'progreso')  loadProgress();
 }
 
 function switchView(view) {
   if (view !== 'simulacro' && _sim !== null && _sim.started === true) {
+    showNavWarning(view);
+    return;
+  }
+  if (view !== 'curado' && _curado !== null && _curado.started === true) {
     showNavWarning(view);
     return;
   }
@@ -97,7 +105,9 @@ function navWarnCancel() {
 function navWarnConfirm() {
   document.getElementById('nav-warn-overlay').style.display = 'none';
   stopTimer();
+  stopCuradoTimer();
   _sim = null;
+  _curado = null;
   const view = _pendingNavView;
   _pendingNavView = null;
   _realSwitchView(view);
@@ -142,8 +152,8 @@ function renderHome(data) {
       <div class="glass-card home-first-sim">
         <div class="home-first-sim-icon">📝</div>
         <h3>Comienza a practicar</h3>
-        <p>Haz tu primer simulacro ICFES y empieza a ver tu progreso.</p>
-        <button class="sim-start-btn" style="margin-top:20px" onclick="switchView('simulacro')">Iniciar simulacro</button>
+        <p>Haz tu primera práctica ICFES y empieza a ver tu progreso.</p>
+        <button class="sim-start-btn" style="margin-top:20px" onclick="switchView('simulacro')">Iniciar práctica</button>
       </div>`;
     return;
   }
@@ -169,7 +179,7 @@ function renderHome(data) {
     <div class="progress-cards home-stats">
       <div class="progress-card">
         <div class="progress-card-num">${data.total_simulations}</div>
-        <div class="progress-card-label">Simulacros completados</div>
+        <div class="progress-card-label">Prácticas completadas</div>
       </div>
       <div class="progress-card">
         <div class="progress-card-num" style="color:${avgPct >= 60 ? 'var(--green)' : 'var(--red)'}">${avgPct}%</div>
@@ -182,9 +192,9 @@ function renderHome(data) {
     </div>
     <div class="home-bottom-grid">
       <div class="glass-card home-next-sim">
-        <div class="home-section-label">Próximo Simulacro</div>
-        <h3 class="home-next-sim-title">Simulacro ICFES</h3>
-        <button class="sim-start-btn" onclick="switchView('simulacro')">Iniciar simulacro</button>
+        <div class="home-section-label">Próxima Práctica</div>
+        <h3 class="home-next-sim-title">Práctica ICFES</h3>
+        <button class="sim-start-btn" onclick="switchView('simulacro')">Iniciar práctica</button>
       </div>
       <div class="glass-card home-recent">
         <div class="home-section-label">Actividad Reciente</div>
@@ -193,7 +203,7 @@ function renderHome(data) {
     </div>`;
 }
 
-// ── Timer ─────────────────────────────────────────────────────────────────────
+// ── Timer (práctica) ──────────────────────────────────────────────────────────
 
 function startTimer() {
   clearInterval(_timerInterval);
@@ -222,7 +232,7 @@ function updateTimerDisplay() {
   el.classList.toggle('urgent', _timerSecondsLeft <= 120);
 }
 
-// ── Simulation ────────────────────────────────────────────────────────────────
+// ── Práctica aleatoria ────────────────────────────────────────────────────────
 
 async function loadSimIdle() {
   stopTimer();
@@ -242,7 +252,7 @@ function renderSimConfig() {
 
   c.innerHTML = `
     <div class="sim-config-screen">
-      <h2>Simulacro ICFES</h2>
+      <h2>Práctica ICFES</h2>
       <p class="sim-config-subtitle">Elige las materias y la cantidad de preguntas</p>
       <div class="sim-subject-toggles">${subjectOptions}</div>
       <div class="sim-total-row">
@@ -256,7 +266,7 @@ function renderSimConfig() {
           <option value="30">30</option>
         </select>
       </div>
-      <button class="sim-start-btn" onclick="startSim()">Iniciar simulacro</button>
+      <button class="sim-start-btn" onclick="startSim()">Iniciar práctica</button>
     </div>`;
 }
 
@@ -295,7 +305,7 @@ async function startSim() {
     };
 
     if (!_sim.questions.length) {
-      c.innerHTML = `<h2>Simulacro ICFES</h2><p class="sub">No hay preguntas disponibles para la selección elegida.</p><button class="sim-start-btn" style="margin-top:16px" onclick="loadSimIdle()">Volver</button>`;
+      c.innerHTML = `<h2>Práctica ICFES</h2><p class="sub">No hay preguntas disponibles para la selección elegida.</p><button class="sim-start-btn" style="margin-top:16px" onclick="loadSimIdle()">Volver</button>`;
       return;
     }
 
@@ -340,7 +350,7 @@ function renderSimQuestion() {
       <img class="sim-question-img" src="/uploads/${q.image_path}" alt="Pregunta ${current}" />
     </div>
     <div class="sim-options">${opts}</div>
-    <button class="sim-nav-btn" onclick="${isLast ? 'submitSim()' : 'nextQuestion()'}">${isLast ? 'Entregar simulacro' : 'Siguiente'}</button>`;
+    <button class="sim-nav-btn" onclick="${isLast ? 'submitSim()' : 'nextQuestion()'}">${isLast ? 'Entregar práctica' : 'Siguiente'}</button>`;
   if (_sim.timeLimitMinutes > 0) updateTimerDisplay();
   if (isAnswered) {
     const correct = q.correct_option;
@@ -405,7 +415,7 @@ function renderSimResult(data) {
   const c = document.getElementById('sim-container');
   const scoreColor = data.score >= 60 ? 'var(--green)' : 'var(--red)';
   const timeoutBanner = data.timed_out
-    ? `<div class="sim-timeout-banner">⏱ Tiempo agotado — el simulacro fue enviado automáticamente</div>`
+    ? `<div class="sim-timeout-banner">⏱ Tiempo agotado — la práctica fue enviada automáticamente</div>`
     : '';
   const breakdown = Object.entries(data.breakdown || {}).map(([subject, bd]) => {
     const pct = bd.total > 0 ? (bd.correct / bd.total * 100) : 0;
@@ -422,7 +432,265 @@ function renderSimResult(data) {
       <div class="score-label">${data.correct} correctas de ${data.total}</div>
     </div>
     ${breakdown ? `<div class="sim-breakdown">${breakdown}</div>` : ''}
-    <button class="sim-back-btn" onclick="loadSimIdle()">Hacer otro simulacro</button>`;
+    <button class="sim-back-btn" onclick="loadSimIdle()">Hacer otra práctica</button>`;
+}
+
+// ── Simulacro curado ──────────────────────────────────────────────────────────
+
+function _escHtml(s) {
+  return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+async function loadCuradoIdle() {
+  stopCuradoTimer();
+  _curado = null;
+  const c = document.getElementById('curado-container');
+  c.innerHTML = '<div class="sim-card"><div class="sim-empty">Cargando…</div></div>';
+  try {
+    const res = await fetch('/api/simulacro/active');
+    if (res.status === 401) { logout(); return; }
+    if (!res.ok) throw new Error();
+    renderCuradoStatus(await res.json());
+  } catch {
+    c.innerHTML = '<div class="sim-card"><div class="sim-empty">Error al cargar.</div></div>';
+  }
+}
+
+function renderCuradoStatus(data) {
+  const c = document.getElementById('curado-container');
+
+  if (!data.available && !data.already_taken) {
+    c.innerHTML = `
+      <div class="sim-card" style="text-align:center;max-width:480px;margin:0 auto">
+        <div style="font-size:2.5rem;margin-bottom:16px">📋</div>
+        <h2 style="margin-bottom:8px">Sin simulacro disponible</h2>
+        <p class="sub">No hay un simulacro activo en este momento. ¡Vuelve pronto!</p>
+      </div>`;
+    return;
+  }
+
+  if (data.already_taken) {
+    const r = data.last_result;
+    const scoreColor = r && r.score >= 60 ? 'var(--green)' : 'var(--red)';
+    const timeoutBanner = r && r.timed_out
+      ? `<div class="sim-timeout-banner">⏱ Tiempo agotado — el simulacro fue enviado automáticamente</div>`
+      : '';
+    const breakdown = r ? Object.entries(r.breakdown || {}).map(([subject, bd]) => {
+      const pct = bd.total > 0 ? (bd.correct / bd.total * 100) : 0;
+      return `<div class="sim-breakdown-row">
+        <span class="bd-label">${SUBJECT_LABELS[subject] || subject}</span>
+        <div class="bd-bar"><div class="bd-fill" style="width:${pct}%"></div></div>
+        <span class="bd-val">${bd.correct}/${bd.total}</span>
+      </div>`;
+    }).join('') : '';
+    c.innerHTML = `
+      <div class="sim-card" style="max-width:680px;margin:0 auto">
+        <h2 style="margin-bottom:4px">${_escHtml(data.name)}</h2>
+        <p class="sub">Ya completaste este simulacro.</p>
+        ${timeoutBanner}
+        ${r ? `<div class="sim-result-score">
+          <div class="big-score" style="color:${scoreColor}">${r.score}<span class="pct">%</span></div>
+          <div class="score-label">${r.correct} correctas de ${r.total}</div>
+        </div>` : ''}
+        ${breakdown ? `<div class="sim-breakdown">${breakdown}</div>` : ''}
+        <p style="font-size:0.82rem;color:var(--muted);text-align:center;margin-top:16px">Cuando el admin publique un nuevo simulacro, podrás participar.</p>
+      </div>`;
+    return;
+  }
+
+  if (data.available) {
+    const timeInfo = data.time_limit_minutes > 0
+      ? `${data.question_count} preguntas · ${data.time_limit_minutes} min`
+      : `${data.question_count} preguntas · Sin límite de tiempo`;
+    c.innerHTML = `
+      <div class="sim-card" style="text-align:center;max-width:480px;margin:0 auto">
+        <div style="font-size:2.5rem;margin-bottom:16px">📝</div>
+        <h2 style="margin-bottom:8px">${_escHtml(data.name)}</h2>
+        <p class="sub">${timeInfo}</p>
+        <span class="curado-badge">Solo puedes hacerlo una vez</span>
+        <button class="sim-start-btn" style="margin-top:24px" onclick="startCurado()">Iniciar simulacro</button>
+      </div>`;
+  }
+}
+
+async function startCurado() {
+  const c = document.getElementById('curado-container');
+  c.innerHTML = '<div class="sim-card"><div class="sim-empty">Cargando preguntas…</div></div>';
+  try {
+    const res = await fetch('/api/simulacro/start', { method: 'POST' });
+    if (res.status === 401) { logout(); return; }
+    if (res.status === 409) { loadCuradoIdle(); return; }
+    if (!res.ok) throw new Error();
+    const data = await res.json();
+
+    _curado = {
+      simulacroId: data.simulacro_id,
+      sessionId: data.session_id,
+      name: data.name,
+      questions: data.questions || [],
+      currentIndex: 0,
+      answers: [],
+      answered: [],
+      timeLimitMinutes: data.time_limit_minutes || 0,
+      started: true,
+    };
+
+    if (!_curado.questions.length) {
+      c.innerHTML = `<div class="sim-card"><p class="sim-empty">Sin preguntas en este simulacro.</p><button class="sim-back-btn" style="margin-top:16px" onclick="loadCuradoIdle()">Volver</button></div>`;
+      return;
+    }
+
+    if (_curado.timeLimitMinutes > 0) {
+      _curadoTimerSecondsLeft = _curado.timeLimitMinutes * 60;
+      startCuradoTimer();
+    }
+    renderCuradoQuestion();
+  } catch {
+    c.innerHTML = `<div class="sim-card"><p class="sim-empty" style="color:var(--red)">Error al cargar el simulacro.</p><button class="sim-back-btn" style="margin-top:16px" onclick="loadCuradoIdle()">Volver</button></div>`;
+  }
+}
+
+function startCuradoTimer() {
+  clearInterval(_curadoTimerInterval);
+  _curadoTimerInterval = setInterval(() => {
+    _curadoTimerSecondsLeft--;
+    updateCuradoTimerDisplay();
+    if (_curadoTimerSecondsLeft <= 0) {
+      clearInterval(_curadoTimerInterval);
+      _curadoTimerInterval = null;
+      submitCurado(true);
+    }
+  }, 1000);
+}
+
+function stopCuradoTimer() {
+  clearInterval(_curadoTimerInterval);
+  _curadoTimerInterval = null;
+}
+
+function updateCuradoTimerDisplay() {
+  const el = document.getElementById('curado-timer');
+  if (!el) return;
+  const mins = Math.floor(_curadoTimerSecondsLeft / 60);
+  const secs = _curadoTimerSecondsLeft % 60;
+  el.textContent = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+  el.classList.toggle('urgent', _curadoTimerSecondsLeft <= 120);
+}
+
+function renderCuradoQuestion() {
+  const c = document.getElementById('curado-container');
+  const q = _curado.questions[_curado.currentIndex];
+  const total = _curado.questions.length;
+  const current = _curado.currentIndex + 1;
+  const pct = ((current - 1) / total * 100).toFixed(0);
+  const selected = _curado.answers[_curado.currentIndex];
+  const isLast = _curado.currentIndex === total - 1;
+  const isAnswered = _curado.answered[_curado.currentIndex];
+  const opts = ['A', 'B', 'C', 'D'].map(opt => {
+    const disabled = isAnswered ? ' disabled' : '';
+    return `<button class="sim-option-btn${selected === opt ? ' selected' : ''}" onclick="selectCuradoOption('${opt}')"${disabled}>${opt}</button>`;
+  }).join('');
+  const timerHtml = _curado.timeLimitMinutes > 0
+    ? `<span class="sim-timer" id="curado-timer"></span>`
+    : '';
+
+  c.innerHTML = `
+    <div class="sim-card">
+      <div class="sim-progress">
+        <div class="sim-progress-bar"><div class="sim-progress-fill" style="width:${pct}%"></div></div>
+        <div class="sim-progress-text">${current} / ${total}</div>
+        ${timerHtml}
+      </div>
+      <div class="sim-question-img-wrap">
+        <img class="sim-question-img" src="/uploads/${q.image_path}" alt="Pregunta ${current}" />
+      </div>
+      <div class="sim-options">${opts}</div>
+      <button class="sim-nav-btn" onclick="${isLast ? 'submitCurado()' : 'nextCuradoQuestion()'}">
+        ${isLast ? 'Entregar simulacro' : 'Siguiente'}
+      </button>
+    </div>`;
+  if (_curado.timeLimitMinutes > 0) updateCuradoTimerDisplay();
+  if (isAnswered) {
+    const correct = q.correct_option;
+    const wasCorrect = selected === correct;
+    const fb = document.createElement('div');
+    fb.id = 'curado-feedback';
+    fb.className = `sim-feedback ${wasCorrect ? 'correct' : 'incorrect'}`;
+    fb.textContent = wasCorrect ? '¡Correcto! 🎉' : `Incorrecto. Respuesta correcta: ${correct}`;
+    document.querySelector('.sim-options').appendChild(fb);
+  }
+}
+
+function selectCuradoOption(opt) {
+  const idx = _curado.currentIndex;
+  if (_curado.answered[idx]) return;
+  _curado.answers[idx] = opt;
+  _curado.answered[idx] = true;
+  const correct = _curado.questions[idx].correct_option;
+  const fb = document.createElement('div');
+  fb.id = 'curado-feedback';
+  fb.className = `sim-feedback ${opt === correct ? 'correct' : 'incorrect'}`;
+  fb.textContent = opt === correct ? '¡Correcto! 🎉' : `Incorrecto. Respuesta correcta: ${correct}`;
+  document.querySelector('.sim-options').appendChild(fb);
+  renderCuradoQuestion();
+}
+
+function nextCuradoQuestion() {
+  if (_curado.currentIndex < _curado.questions.length - 1) {
+    _curado.currentIndex++;
+    renderCuradoQuestion();
+  }
+}
+
+async function submitCurado(timedOut = false) {
+  stopCuradoTimer();
+  const c = document.getElementById('curado-container');
+  c.innerHTML = '<div class="sim-card"><div class="sim-empty">Calculando resultados…</div></div>';
+  const answers = _curado.questions
+    .map((q, i) => ({ question_id: q.id, selected_option: _curado.answers[i] || null }))
+    .filter(a => a.selected_option);
+  try {
+    const res = await fetch('/api/simulacro/submit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        simulacro_id: _curado.simulacroId,
+        session_id: _curado.sessionId,
+        answers,
+        timed_out: timedOut,
+      }),
+    });
+    if (res.status === 401) { logout(); return; }
+    _curado = null;
+    renderCuradoResult(await res.json());
+  } catch {
+    c.innerHTML = '<div class="sim-card"><div class="sim-empty">Error al enviar. Intenta de nuevo.</div></div>';
+  }
+}
+
+function renderCuradoResult(data) {
+  const c = document.getElementById('curado-container');
+  const scoreColor = data.score >= 60 ? 'var(--green)' : 'var(--red)';
+  const timeoutBanner = data.timed_out
+    ? `<div class="sim-timeout-banner">⏱ Tiempo agotado — el simulacro fue enviado automáticamente</div>`
+    : '';
+  const breakdown = Object.entries(data.breakdown || {}).map(([subject, bd]) => {
+    const pct = bd.total > 0 ? (bd.correct / bd.total * 100) : 0;
+    return `<div class="sim-breakdown-row">
+      <span class="bd-label">${SUBJECT_LABELS[subject] || subject}</span>
+      <div class="bd-bar"><div class="bd-fill" style="width:${pct}%"></div></div>
+      <span class="bd-val">${bd.correct}/${bd.total}</span>
+    </div>`;
+  }).join('');
+  c.innerHTML = `
+    <div class="sim-card" style="max-width:680px;margin:0 auto">
+      ${timeoutBanner}
+      <div class="sim-result-score">
+        <div class="big-score" style="color:${scoreColor}">${data.score}<span class="pct">%</span></div>
+        <div class="score-label">${data.correct} correctas de ${data.total}</div>
+      </div>
+      ${breakdown ? `<div class="sim-breakdown">${breakdown}</div>` : ''}
+    </div>`;
 }
 
 // ── Progress ──────────────────────────────────────────────────────────────────
@@ -447,8 +715,8 @@ function renderProgress(data) {
     c.innerHTML = `
       <div class="progress-empty">
         <div class="progress-empty-icon">📊</div>
-        <p>Aún no has completado simulacros.</p>
-        <button class="sim-start-btn" style="max-width:260px" onclick="switchView('simulacro')">Hacer mi primer simulacro</button>
+        <p>Aún no has completado prácticas.</p>
+        <button class="sim-start-btn" style="max-width:260px" onclick="switchView('simulacro')">Hacer mi primera práctica</button>
       </div>`;
     return;
   }
@@ -461,7 +729,7 @@ function renderProgress(data) {
     <div class="progress-cards">
       <div class="progress-card">
         <div class="progress-card-num">${data.total_simulations}</div>
-        <div class="progress-card-label">Simulacros completados</div>
+        <div class="progress-card-label">Prácticas completadas</div>
       </div>
       <div class="progress-card">
         <div class="progress-card-num" style="color:${avgPct >= 60 ? 'var(--green)' : 'var(--red)'}">${avgPct}%</div>
@@ -511,6 +779,7 @@ async function init() {
     renderUser(user);
     document.getElementById('app').classList.add('visible');
     if (!user.is_active) {
+      document.getElementById('nav-curado').style.display   = 'none';
       document.getElementById('nav-simulacro').style.display = 'none';
       document.getElementById('nav-progreso').style.display  = 'none';
     }
@@ -532,6 +801,11 @@ Object.assign(window, {
   loadProgress,
   navWarnCancel,
   navWarnConfirm,
+  loadCuradoIdle,
+  startCurado,
+  selectCuradoOption,
+  nextCuradoQuestion,
+  submitCurado,
 });
 
 init();
