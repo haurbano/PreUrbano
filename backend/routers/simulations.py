@@ -32,6 +32,16 @@ DEFAULT_CONFIG = {
 }
 
 
+@router.get("/simulation/subjects")
+def get_available_subjects(
+    token_data: dict = Depends(verify_user_token_cookie),
+    db: Session = Depends(get_db),
+):
+    rows = db.query(Question.subject).distinct().all()
+    available = {r[0] for r in rows}
+    return {"subjects": [s for s in SUBJECTS if s in available]}
+
+
 @router.post("/simulation/start", response_model=SimulationStartOut)
 def start_simulation(
     body: SimulationStartIn | None = None,

@@ -237,12 +237,20 @@ function updateTimerDisplay() {
 async function loadSimIdle() {
   stopTimer();
   _sim = null;
-  renderSimConfig();
+  let availableSubjects = SUBJECTS;
+  try {
+    const res = await fetch('/api/simulation/subjects');
+    if (res.ok) {
+      const data = await res.json();
+      if (data.subjects && data.subjects.length > 0) availableSubjects = data.subjects;
+    }
+  } catch (_) {}
+  renderSimConfig(availableSubjects);
 }
 
-function renderSimConfig() {
+function renderSimConfig(availableSubjects = SUBJECTS) {
   const c = document.getElementById('sim-container');
-  const subjectOptions = SUBJECTS.map(key => {
+  const subjectOptions = availableSubjects.map(key => {
     const label = SUBJECT_LABELS[key];
     return `<label class="sim-subject-toggle">
       <input type="checkbox" value="${key}" checked />
