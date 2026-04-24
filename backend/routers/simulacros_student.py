@@ -94,6 +94,11 @@ def start_simulacro(
         )
         for qid in qids if qid in qs_map
     ]
+    seen: dict[str, int] = {}
+    for i, q in enumerate(questions):
+        if q.subject not in seen:
+            seen[q.subject] = i
+    questions.sort(key=lambda q: seen[q.subject])
 
     session_id = str(uuid.uuid4())
     _active_sim_sessions[session_id] = {

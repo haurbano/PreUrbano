@@ -247,6 +247,7 @@ sidebar {
 }
 .sim-start-btn:hover { background: #2e2e48; }
 
+.sim-subject-badge { text-align: center; font-size: 0.75rem; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--accent); margin-bottom: 12px; }
 .sim-progress { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
 .sim-progress-bar  { flex: 1; height: 6px; background: rgba(0,0,0,0.07); border-radius: 100px; overflow: hidden; }
 .sim-progress-fill { height: 100%; background: var(--accent); border-radius: 100px; transition: width 0.3s ease; }

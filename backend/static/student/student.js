@@ -349,6 +349,7 @@ function renderSimQuestion() {
     : '';
 
   c.innerHTML = `
+    <div class="sim-subject-badge">${SUBJECT_LABELS[q.subject] || q.subject}</div>
     <div class="sim-progress">
       <div class="sim-progress-bar"><div class="sim-progress-fill" style="width:${pct}%"></div></div>
       <div class="sim-progress-text">${current} / ${total}</div>
@@ -604,6 +605,7 @@ function renderCuradoQuestion() {
 
   c.innerHTML = `
     <div class="sim-card">
+      <div class="sim-subject-badge">${SUBJECT_LABELS[q.subject] || q.subject}</div>
       <div class="sim-progress">
         <div class="sim-progress-bar"><div class="sim-progress-fill" style="width:${pct}%"></div></div>
         <div class="sim-progress-text">${current} / ${total}</div>

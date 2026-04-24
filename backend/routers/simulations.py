@@ -63,10 +63,11 @@ def start_simulation(
     subjects = body.subjects if body and body.subjects else SUBJECTS
     total_target = body.total_questions if body and body.total_questions else config.questions_per_simulation
 
+    selected = [s for s in SUBJECTS if s in subjects]
+    random.shuffle(selected)
+
     all_questions = []
-    for subject in SUBJECTS:
-        if subject not in subjects:
-            continue
+    for subject in selected:
         subject_qs = db.query(Question).filter(Question.subject == subject).all()
         random.shuffle(subject_qs)
         all_questions.extend(subject_qs[:total_target])
@@ -78,8 +79,6 @@ def start_simulation(
             total_available=0,
             warning="No hay preguntas disponibles.",
         )
-
-    random.shuffle(all_questions)
     total_available = len(all_questions)
     warning = None
     expected_total = total_target * len(subjects)
