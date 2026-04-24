@@ -4,7 +4,7 @@
 
 ### Admin
 
-- [ ] **Simulacros curados por el admin**
+- [x] **Simulacros creados por el admin**
 
   El admin arma manualmente simulacros eligiendo y ordenando preguntas del banco. Solo uno puede estar activo a la vez; los estudiantes ven tanto el simulacro activo como la práctica libre.
 
