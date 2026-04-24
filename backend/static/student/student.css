@@ -220,7 +220,7 @@ sidebar {
   border: 1px solid rgba(255, 255, 255, 0.55);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.07);
   border-radius: 20px;
-  padding: 28px 32px; max-width: 680px; margin: 0 auto;
+  padding: 28px 32px; max-width: 100%; margin: 0 auto;
 }
 .sim-card h2   { font-size: 1rem; font-weight: 600; color: var(--text); margin-bottom: 4px; }
 .sim-card .sub { font-size: 0.82rem; color: var(--muted); margin-bottom: 24px; }
@@ -259,7 +259,7 @@ sidebar {
   border-radius: 12px; border: 1px solid rgba(0,0,0,0.08);
 }
 
-.sim-options { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 24px; }
+.sim-options { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 24px; max-width: 640px; margin-left: auto; margin-right: auto; }
 .sim-option-btn {
   background: rgba(255,255,255,0.5); border: 1.5px solid rgba(0,0,0,0.09); border-radius: 12px;
   padding: 14px 8px; font-family: 'Inter', sans-serif; font-size: 1.1rem; font-weight: 700;
@@ -269,7 +269,8 @@ sidebar {
 .sim-option-btn.selected { border-color: var(--accent); background: rgba(108,99,255,0.12); color: var(--accent); }
 
 .sim-nav-btn {
-  display: block; width: 100%; background: #1c1c2e; color: #fff; border: none;
+  display: block; width: 100%; max-width: 400px; margin-left: auto; margin-right: auto;
+  background: #1c1c2e; color: #fff; border: none;
   border-radius: 14px; padding: 14px; font-family: 'Inter', sans-serif;
   font-size: 0.95rem; font-weight: 600; cursor: pointer; transition: background 0.2s;
 }
