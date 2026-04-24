@@ -348,10 +348,11 @@ sidebar {
 .history-score  { font-size: 1rem; font-weight: 700; color: var(--text); min-width: 44px; }
 .history-detail { font-size: 0.82rem; color: var(--muted); }
 
-/* ── Sim views: cancel content side-padding so image fills the viewport ── */
-#view-simulacro, #view-curado {
-  margin-left: -40px;
-  margin-right: -40px;
+/* ── Sim views: remove content side-padding so image fills the viewport ── */
+.content:has(#view-simulacro.active),
+.content:has(#view-curado.active) {
+  padding-left: 0;
+  padding-right: 0;
 }
 
 /* ── form-msg light ── */
@@ -362,7 +363,7 @@ sidebar {
   .profile-grid   { grid-template-columns: 1fr; gap: 0; }
   .profile-card   { padding: 24px 20px; }
   .content        { padding: 20px 16px; }
-  #view-simulacro, #view-curado { margin-left: -16px; margin-right: -16px; }
+
   .progress-cards { grid-template-columns: 1fr; }
   .history-row    { flex-wrap: wrap; gap: 6px; }
   .history-date   { min-width: unset; }
