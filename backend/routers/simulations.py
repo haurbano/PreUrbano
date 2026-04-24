@@ -53,27 +53,13 @@ def start_simulation(
     subjects = body.subjects if body and body.subjects else SUBJECTS
     total_target = body.total_questions if body and body.total_questions else config.questions_per_simulation
 
-    base_limits = config.subject_limits
-    selected_subjects = [s for s in SUBJECTS if s in subjects and base_limits.get(s, 0) > 0]
-    total_config = sum(base_limits.get(s, 0) for s in selected_subjects)
-
-    # Scale per-subject limits if student requested fewer questions than the admin total
-    if total_config > 0 and total_target < total_config:
-        factor = total_target / total_config
-        limits = {s: max(1, int(base_limits[s] * factor)) for s in base_limits}
-    else:
-        limits = base_limits
-
     all_questions = []
     for subject in SUBJECTS:
         if subject not in subjects:
             continue
-        limit = limits.get(subject, 0)
-        if limit <= 0:
-            continue
         subject_qs = db.query(Question).filter(Question.subject == subject).all()
         random.shuffle(subject_qs)
-        all_questions.extend(subject_qs[:limit])
+        all_questions.extend(subject_qs[:total_target])
 
     if not all_questions:
         return SimulationStartOut(
@@ -86,7 +72,8 @@ def start_simulation(
     random.shuffle(all_questions)
     total_available = len(all_questions)
     warning = None
-    if total_available < total_target:
+    expected_total = total_target * len(subjects)
+    if total_available < expected_total:
         warning = f"Solo hay {total_available} preguntas disponibles."
 
     questions_out = [

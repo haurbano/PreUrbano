@@ -256,7 +256,7 @@ function renderSimConfig() {
       <p class="sim-config-subtitle">Elige las materias y la cantidad de preguntas</p>
       <div class="sim-subject-toggles">${subjectOptions}</div>
       <div class="sim-total-row">
-        <label class="sim-total-label">Preguntas:</label>
+        <label class="sim-total-label">Preguntas por materia:</label>
         <select id="sim-total-select">
           <option value="5">5</option>
           <option value="10">10</option>
