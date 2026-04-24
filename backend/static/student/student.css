@@ -220,7 +220,7 @@ sidebar {
   border: 1px solid rgba(255, 255, 255, 0.55);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.07);
   border-radius: 20px;
-  padding: 28px 32px; max-width: 100%; margin: 0 auto;
+  padding: 20px 16px; max-width: 100%; margin: 0 auto;
 }
 .sim-card h2   { font-size: 1rem; font-weight: 600; color: var(--text); margin-bottom: 4px; }
 .sim-card .sub { font-size: 0.82rem; color: var(--muted); margin-bottom: 24px; }
@@ -348,6 +348,12 @@ sidebar {
 .history-score  { font-size: 1rem; font-weight: 700; color: var(--text); min-width: 44px; }
 .history-detail { font-size: 0.82rem; color: var(--muted); }
 
+/* ── Sim views: cancel content side-padding so image fills the viewport ── */
+#view-simulacro, #view-curado {
+  margin-left: -40px;
+  margin-right: -40px;
+}
+
 /* ── form-msg light ── */
 .form-msg.ok  { color: #059669; }
 .form-msg.err { color: #dc2626; }
@@ -356,6 +362,7 @@ sidebar {
   .profile-grid   { grid-template-columns: 1fr; gap: 0; }
   .profile-card   { padding: 24px 20px; }
   .content        { padding: 20px 16px; }
+  #view-simulacro, #view-curado { margin-left: -16px; margin-right: -16px; }
   .progress-cards { grid-template-columns: 1fr; }
   .history-row    { flex-wrap: wrap; gap: 6px; }
   .history-date   { min-width: unset; }
