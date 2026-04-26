@@ -57,6 +57,8 @@ async def google_callback(request: Request, code: str, state: str):
     try:
         user = db.query(User).filter(User.google_id == google_id).first()
         if user:
+            if user.is_deleted:
+                return RedirectResponse(f"{APP_BASE_URL}/?auth_error=account_deleted")
             user.name = name
             user.picture = picture
         else:
@@ -94,7 +96,7 @@ async def me(token_data: dict = Depends(verify_user_token_cookie)):
     db = SessionLocal()
     try:
         user = db.query(User).filter(User.id == int(token_data["sub"])).first()
-        if not user:
+        if not user or user.is_deleted:
             raise HTTPException(status_code=401, detail="No autenticado")
         return user
     finally:

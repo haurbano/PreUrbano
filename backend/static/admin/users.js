@@ -1,4 +1,4 @@
-import { token, logout } from './shared.js';
+import { token, logout, showToast } from './shared.js';
 
 let currentModalUser = null;
 
@@ -153,4 +153,31 @@ export async function toggleUser() {
 export function closeModal(e) {
   if (e.target === document.getElementById('user-modal'))
     document.getElementById('user-modal').classList.add('hidden');
+}
+
+export async function deleteUser() {
+  if (!currentModalUser) return;
+  const name = currentModalUser.name;
+  if (!confirm(`¿Eliminar a ${name}?\n\nEl usuario no podrá volver a iniciar sesión y desaparecerá del panel. Sus datos históricos se conservan.`)) return;
+
+  const btn = document.getElementById('modal-delete-btn');
+  btn.disabled = true;
+  btn.textContent = 'Eliminando…';
+
+  try {
+    const res = await fetch(`/admin/users/${currentModalUser.id}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token()}` },
+    });
+    if (res.status === 401) { logout(); return; }
+    if (!res.ok) { alert('Error al eliminar usuario.'); btn.disabled = false; btn.textContent = 'Eliminar usuario'; return; }
+
+    document.getElementById('user-modal').classList.add('hidden');
+    await loadUsers();
+    showToast(`✓ ${name} eliminado`);
+  } catch {
+    alert('Error de conexión.');
+    btn.disabled = false;
+    btn.textContent = 'Eliminar usuario';
+  }
 }

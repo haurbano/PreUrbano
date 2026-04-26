@@ -50,7 +50,7 @@ def list_users(
     db: Session = Depends(get_db),
     _: str = Depends(verify_token),
 ):
-    return db.query(User).order_by(User.created_at.desc()).all()
+    return db.query(User).filter(User.is_deleted == False).order_by(User.created_at.desc()).all()
 
 
 @router.patch("/users/{user_id}", response_model=UserOut)
@@ -67,6 +67,19 @@ def update_user(
     db.commit()
     db.refresh(user)
     return user
+
+
+@router.delete("/users/{user_id}", status_code=204)
+def delete_user(
+    user_id: int,
+    db: Session = Depends(get_db),
+    _: str = Depends(verify_token),
+):
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado.")
+    user.is_deleted = True
+    db.commit()
 
 
 @router.get("/simulation/config", response_model=SimulationConfigOut)
@@ -149,7 +162,7 @@ def list_students(
     db: Session = Depends(get_db),
     _: str = Depends(verify_token),
 ):
-    users = db.query(User).order_by(User.created_at.desc()).all()
+    users = db.query(User).filter(User.is_deleted == False).order_by(User.created_at.desc()).all()
     items = []
     for user in users:
         results = (
