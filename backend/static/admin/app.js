@@ -6,7 +6,9 @@ import {
   saveQuestion, loadQuestions, handleQuestionRowClick,
   saveQuestionEdit, deleteQuestion, deleteQuestionFromDetail,
   handleGroupSelectChange, saveGroupAssignment,
-} from './questions.js?v=3';
+  setReplaceFile, handleReplaceDragOver, handleReplaceDragLeave, handleReplaceDrop,
+  replaceQuestionImage,
+} from './questions.js?v=4';
 import { loadSimConfig, saveSimConfig } from './simconfig.js?v=3';
 import {
   loadSimulacros, openSimulacroEditor, saveSimulacro,
@@ -85,6 +87,11 @@ Object.assign(window, {
   deleteQuestionFromDetail,
   handleGroupSelectChange,
   saveGroupAssignment,
+  setReplaceFile,
+  handleReplaceDragOver,
+  handleReplaceDragLeave,
+  handleReplaceDrop,
+  replaceQuestionImage,
   loadSimConfig,
   saveSimConfig,
   showToast,

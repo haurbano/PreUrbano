@@ -47,6 +47,8 @@ class UserOut(BaseModel):
     is_active: bool
     document_id: str | None
     phone: str | None
+    grade: str | None
+    institution: str | None
     created_at: datetime
 
     model_config = {"from_attributes": True}
@@ -56,6 +58,8 @@ class UserProfileUpdate(BaseModel):
     name: str
     document_id: str | None = None
     phone: str | None = None
+    grade: str | None = None
+    institution: str | None = None
 
 
 class QuestionOut(BaseModel):

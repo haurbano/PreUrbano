@@ -31,10 +31,12 @@ function renderUser(user) {
   }
   document.getElementById('sb-name').textContent    = user.name;
   document.getElementById('sb-email').textContent   = user.email;
-  document.getElementById('field-email').value      = user.email;
-  document.getElementById('field-name').value       = user.name || '';
-  document.getElementById('field-document').value   = user.document_id || '';
-  document.getElementById('field-phone').value      = user.phone || '';
+  document.getElementById('field-email').value       = user.email;
+  document.getElementById('field-name').value        = user.name || '';
+  document.getElementById('field-document').value    = user.document_id || '';
+  document.getElementById('field-phone').value       = user.phone || '';
+  document.getElementById('field-grade').value       = user.grade || '';
+  document.getElementById('field-institution').value = user.institution || '';
 }
 
 async function saveProfile() {
@@ -51,6 +53,8 @@ async function saveProfile() {
         name: document.getElementById('field-name').value,
         document_id: document.getElementById('field-document').value || null,
         phone: document.getElementById('field-phone').value || null,
+        grade: document.getElementById('field-grade').value || null,
+        institution: document.getElementById('field-institution').value || null,
       }),
     });
     if (!res.ok) throw new Error();

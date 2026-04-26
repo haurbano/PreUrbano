@@ -212,6 +212,39 @@ def delete_group(
     db.commit()
 
 
+@router.patch("/questions/{question_id}/image", response_model=QuestionOut)
+async def replace_question_image(
+    question_id: int,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    _: str = Depends(verify_token),
+):
+    q = db.query(Question).filter(Question.id == question_id).first()
+    if not q:
+        raise HTTPException(status_code=404, detail="Pregunta no encontrada.")
+
+    if file.content_type not in ALLOWED_TYPES:
+        raise HTTPException(status_code=400, detail="Solo se aceptan imágenes JPG, PNG o WebP.")
+
+    data = await file.read()
+    if len(data) > MAX_SIZE:
+        raise HTTPException(status_code=400, detail="La imagen supera el límite de 20 MB.")
+
+    ext = file.filename.rsplit(".", 1)[-1].lower() if file.filename and "." in file.filename else "jpg"
+    new_filename = f"{uuid.uuid4().hex}.{ext}"
+    UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
+    (UPLOADS_DIR / new_filename).write_bytes(data)
+
+    old_path = UPLOADS_DIR / q.image_path
+    if old_path.exists():
+        old_path.unlink()
+
+    q.image_path = new_filename
+    db.commit()
+    db.refresh(q)
+    return q
+
+
 @router.delete("/questions/{question_id}", status_code=204)
 def delete_question(
     question_id: int,

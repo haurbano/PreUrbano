@@ -112,6 +112,8 @@ async def update_profile(body: UserProfileUpdate, token_data: dict = Depends(ver
         user.name = body.name.strip()
         user.document_id = body.document_id.strip() if body.document_id else None
         user.phone = body.phone.strip() if body.phone else None
+        user.grade = body.grade.strip() if body.grade else None
+        user.institution = body.institution.strip() if body.institution else None
         db.commit()
         db.refresh(user)
         return user

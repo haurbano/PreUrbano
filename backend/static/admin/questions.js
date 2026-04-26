@@ -1,6 +1,7 @@
 import { token, logout, showToast, subjectLabel } from './shared.js';
 
 export let selectedFile = null;
+let _replaceFile = null;
 let _currentPage = 1;
 const _questionsCache = {};
 let _detailQuestion = null;
@@ -273,6 +274,22 @@ export function openQuestionDetail(q) {
       </div>
 
       <div style="border-top:1px solid var(--border,#e5e7eb);padding-top:16px">
+        <div style="font-size:0.72rem;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.06em">Reemplazar imagen</div>
+        <input type="file" id="replace-file-input" accept="image/jpeg,image/png,image/webp" style="display:none" />
+        <div id="replace-drop-zone" class="drop-zone" style="margin-bottom:10px"
+             onclick="document.getElementById('replace-file-input').click()"
+             ondragover="handleReplaceDragOver(event)"
+             ondragleave="handleReplaceDragLeave()"
+             ondrop="handleReplaceDrop(event)">
+          <div class="drop-zone-icon">🖼️</div>
+          <div class="drop-zone-text"><strong>Arrastra la nueva imagen aquí</strong> o haz clic para seleccionar</div>
+          <div class="drop-zone-hint">JPG, PNG o WebP · Máx. 20 MB</div>
+          <div class="drop-zone-filename" id="replace-drop-zone-filename"></div>
+        </div>
+        <button id="replace-img-btn" class="detail-btn approve" disabled onclick="replaceQuestionImage(${q.id})">Reemplazar imagen</button>
+      </div>
+
+      <div style="border-top:1px solid var(--border,#e5e7eb);padding-top:16px">
         <div style="font-size:0.72rem;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.06em">Conjunto de preguntas</div>
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
           <select id="edit-group" class="edit-select" onchange="handleGroupSelectChange()" style="min-width:220px">
@@ -290,6 +307,11 @@ export function openQuestionDetail(q) {
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.getElementById('view-question-detail').classList.add('active');
   document.getElementById('nav-banco').classList.add('active');
+
+  _replaceFile = null;
+  document.getElementById('replace-file-input').addEventListener('change', e => {
+    setReplaceFile(e.target.files[0]);
+  });
 
   // Load groups asynchronously after rendering
   Promise.all([
@@ -340,4 +362,57 @@ export async function deleteQuestionFromDetail(id) {
     if (res.status === 401) { logout(); return; }
     window.backToQuestions();
   } catch { alert('Error al eliminar pregunta.'); }
+}
+
+export function setReplaceFile(file) {
+  if (!file) return;
+  if (file.size > 20 * 1024 * 1024) { alert('La imagen supera el límite de 20 MB.'); return; }
+  _replaceFile = file;
+  document.getElementById('replace-drop-zone-filename').textContent = file.name;
+  document.getElementById('replace-drop-zone').classList.add('has-file');
+  document.getElementById('replace-img-btn').disabled = false;
+}
+
+export function handleReplaceDragOver(e) {
+  e.preventDefault();
+  document.getElementById('replace-drop-zone').classList.add('drag-over');
+}
+
+export function handleReplaceDragLeave() {
+  document.getElementById('replace-drop-zone').classList.remove('drag-over');
+}
+
+export function handleReplaceDrop(e) {
+  e.preventDefault();
+  document.getElementById('replace-drop-zone').classList.remove('drag-over');
+  if (e.dataTransfer.files[0]) setReplaceFile(e.dataTransfer.files[0]);
+}
+
+export async function replaceQuestionImage(id) {
+  if (!_replaceFile) return;
+  const btn = document.getElementById('replace-img-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Subiendo…';
+  try {
+    const fd = new FormData();
+    fd.append('file', _replaceFile);
+    const res = await fetch(`/questions/${id}/image`, {
+      method: 'PATCH',
+      headers: { Authorization: `Bearer ${token()}` },
+      body: fd,
+    });
+    if (res.status === 401) { logout(); return; }
+    if (!res.ok) { alert('Error: ' + (await res.text())); btn.disabled = false; btn.textContent = 'Reemplazar imagen'; return; }
+    const updated = await res.json();
+    _detailQuestion = updated;
+    _questionsCache[id] = updated;
+    _replaceFile = null;
+    document.getElementById('detail-image').src = `https://preurbano.com/uploads/${updated.image_path}?t=${Date.now()}`;
+    document.getElementById('replace-drop-zone-filename').textContent = '';
+    document.getElementById('replace-drop-zone').classList.remove('has-file');
+    document.getElementById('replace-file-input').value = '';
+    showToast('✓ Imagen reemplazada');
+  } catch { alert('Error de conexión.'); }
+  btn.disabled = false;
+  btn.textContent = 'Reemplazar imagen';
 }
