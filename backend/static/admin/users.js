@@ -61,7 +61,9 @@ export function openUserModal(u, simData = {}) {
   document.getElementById('modal-name').textContent    = u.name;
   document.getElementById('modal-email').textContent   = u.email;
   document.getElementById('modal-document').innerHTML  = u.document_id || empty;
-  document.getElementById('modal-phone').innerHTML     = u.phone || empty;
+  document.getElementById('modal-phone').innerHTML        = u.phone || empty;
+  document.getElementById('modal-institution').innerHTML  = u.institution || empty;
+  document.getElementById('modal-grade').innerHTML        = u.grade || empty;
   document.getElementById('modal-status').innerHTML    = `<span class="badge ${u.is_active ? 'badge-active' : 'badge-off'}">${u.is_active ? 'activo' : 'inactivo'}</span>`;
   document.getElementById('modal-created').textContent = new Date(u.created_at).toLocaleString('es-CO');
 
