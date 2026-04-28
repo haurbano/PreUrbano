@@ -262,7 +262,18 @@ tbody tr.clickable { cursor: pointer; }
 .student-score.low  { color: var(--red); }
 
 #sim-list-modal { cursor: default; }
-#sim-list-modal .modal { max-width: 640px; }
+#sim-list-modal .modal {
+  max-width: 640px;
+  max-height: calc(100vh - 48px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+#sim-list-modal #sim-list-body {
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+}
 .sim-summary-table { width: 100%; border-collapse: collapse; margin-top: 12px; }
 .sim-summary-table th {
   text-align: left; font-size: 0.7rem; font-weight: 500; color: var(--muted);
