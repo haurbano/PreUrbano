@@ -69,8 +69,25 @@ def start_simulation(
     all_questions = []
     for subject in selected:
         subject_qs = db.query(Question).filter(Question.subject == subject).all()
-        random.shuffle(subject_qs)
-        all_questions.extend(subject_qs[:total_target])
+
+        groups: dict[int, list] = {}
+        solo: list = []
+        for q in subject_qs:
+            if q.group_id is not None:
+                groups.setdefault(q.group_id, []).append(q)
+            else:
+                solo.append(q)
+
+        units = list(groups.values()) + [[q] for q in solo]
+        random.shuffle(units)
+
+        subject_selected: list = []
+        for unit in units:
+            if len(subject_selected) >= total_target:
+                break
+            subject_selected.extend(unit)
+
+        all_questions.extend(subject_selected)
 
     if not all_questions:
         return SimulationStartOut(
@@ -86,7 +103,7 @@ def start_simulation(
         warning = f"Solo hay {total_available} preguntas disponibles."
 
     questions_out = [
-        QuestionForSim(id=q.id, subject=q.subject, image_path=q.image_path, correct_option=q.correct_option)
+        QuestionForSim(id=q.id, subject=q.subject, image_path=q.image_path, correct_option=q.correct_option, group_id=q.group_id)
         for q in all_questions
     ]
 
