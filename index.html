@@ -45,7 +45,7 @@
   <div class="container">
     <div class="hero-label">
       <div class="dot"></div>
-      Gratis para estudiantes colonenses
+      Gratis para estudiantes colombianos
     </div>
 
     <h1>
@@ -57,40 +57,17 @@
       Genera formularios de práctica del ICFES personalizados, estudia a tu ritmo y llega preparado. Sin costo, sin límites.
     </p>
 
-    <!-- Countdown -->
-    <div class="countdown-wrap">
-      <div class="countdown-item">
-        <div class="countdown-num" id="days">00</div>
-        <div class="countdown-label">Días</div>
-      </div>
-      <div class="countdown-item">
-        <div class="countdown-num" id="hours">00</div>
-        <div class="countdown-label">Horas</div>
-      </div>
-      <div class="countdown-item">
-        <div class="countdown-num" id="minutes">00</div>
-        <div class="countdown-label">Minutos</div>
-      </div>
-      <div class="countdown-item">
-        <div class="countdown-num" id="seconds">00</div>
-        <div class="countdown-label">Segundos</div>
-      </div>
-    </div>
-
-    <!-- Form -->
-    <div class="form-wrap">
-      <div class="form-row" id="formRow">
-        <input type="email" id="emailInput" placeholder="tucorreo@ejemplo.com" aria-label="Correo electrónico" />
-        <button class="btn-primary" onclick="handleSubmit()">Avísame</button>
-      </div>
-      <div class="success-msg" id="successMsg">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8l3.5 3.5L13 4.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        ¡Listo! Te avisamos cuando lancemos.
-      </div>
-      <p class="form-hint">
-        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1a5 5 0 100 10A5 5 0 006 1zm0 4v4m0-5.5v.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-        Sin spam. Solo te avisamos cuando esté listo.
-      </p>
+    <div style="animation: fadeUp 0.8s ease 0.3s both; margin-bottom: 48px;">
+      <a href="/auth/google/login" class="btn-google"
+         style="display:inline-flex;padding:12px 28px;font-size:0.95rem;font-weight:600;border-radius:100px;gap:10px">
+        <svg width="18" height="18" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M43.6 20.5H42V20.4H24V27.6H35.2C33.6 32 29.2 35.2 24 35.2C17.4 35.2 12 29.8 12 23.2C12 16.6 17.4 11.2 24 11.2C27.1 11.2 29.9 12.4 32 14.3L37.1 9.2C33.8 6.2 29.1 4.4 24 4.4C13.5 4.4 5 12.9 5 23.4C5 33.9 13.5 42.4 24 42.4C34.5 42.4 43 33.9 43 23.4C43 22.4 42.9 21.4 42.7 20.5H43.6Z" fill="#FFC107"/>
+          <path d="M6.3 14.7L12.3 19C13.9 14.9 18.6 12 24 12C27.1 12 29.9 13.2 32 15.1L37.1 10C33.8 7 29.1 5.2 24 5.2C16.3 5.2 9.7 9.2 6.3 14.7Z" fill="#FF3D00"/>
+          <path d="M24 43.2C29 43.2 33.6 41.5 37.2 38.6L31.6 33.8C29.6 35.3 27 36.2 24 36.2C18.8 36.2 14.4 33 12.8 28.6L6.8 33.8C10.1 39.3 16.6 43.2 24 43.2Z" fill="#4CAF50"/>
+          <path d="M43.6 20.5H42V20.4H24V27.6H35.2C34.4 30 33 32.1 31.6 33.8L37.2 38.6C36.8 38.9 43 34.2 43 23.4C43 22.4 42.9 21.4 42.7 20.5H43.6Z" fill="#1976D2"/>
+        </svg>
+        Empezar gratis con Google
+      </a>
     </div>
 
     <!-- Stats -->
@@ -118,25 +95,84 @@
   </div>
 </section>
 
+<!-- Features -->
+<section class="section">
+  <div class="container">
+    <div class="animate-in">
+      <div class="section-label">Funcionalidades</div>
+      <h2 class="section-title">Todo lo que necesitas<br>para el ICFES</h2>
+    </div>
+
+    <div class="features-grid">
+      <div class="feature-card animate-in">
+        <div class="feature-icon">📝</div>
+        <div class="feature-title">Simulacros personalizados</div>
+        <div class="feature-desc">Genera formularios adaptados a tu nivel y a las áreas donde más necesitas practicar.</div>
+      </div>
+      <div class="feature-card animate-in" style="transition-delay:0.1s">
+        <div class="feature-icon">⚡</div>
+        <div class="feature-title">Instantáneo</div>
+        <div class="feature-desc">Sin esperas. En segundos tienes un simulacro listo para empezar a resolver.</div>
+      </div>
+      <div class="feature-card animate-in" style="transition-delay:0.2s">
+        <div class="feature-icon">📊</div>
+        <div class="feature-title">Seguimiento de progreso</div>
+        <div class="feature-desc">Ve cómo mejoras con el tiempo e identifica las áreas donde debes reforzar.</div>
+      </div>
+      <div class="feature-card animate-in" style="transition-delay:0.3s">
+        <div class="feature-icon">🆓</div>
+        <div class="feature-title">Completamente gratis</div>
+        <div class="feature-desc">Sin suscripciones, sin pagos, sin trampas. Acceso total para todos los estudiantes.</div>
+      </div>
+      <div class="feature-card animate-in" style="transition-delay:0.4s">
+        <div class="feature-icon">📱</div>
+        <div class="feature-title">Desde cualquier dispositivo</div>
+        <div class="feature-desc">Estudia desde el celular, tablet o computador. Donde tú estés, PreUrbano está.</div>
+      </div>
+      <div class="feature-card animate-in" style="transition-delay:0.5s">
+        <div class="feature-icon">🎯</div>
+        <div class="feature-title">Estilo ICFES real</div>
+        <div class="feature-desc">Preguntas con el mismo formato y dificultad del examen oficial del ICFES.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Materias -->
+<section class="section" style="padding-top: 0;">
+  <div class="container">
+    <div class="animate-in">
+      <div class="section-label">Áreas cubiertas</div>
+      <h2 class="section-title">Practica todas<br>las materias</h2>
+    </div>
+    <div class="materias-wrap animate-in">
+      <div class="materias-list">
+        <div class="materia-tag"><span class="icon">🔢</span> Matemáticas</div>
+        <div class="materia-tag"><span class="icon">⚗️</span> Ciencias Naturales</div>
+        <div class="materia-tag"><span class="icon">📖</span> Lectura Crítica</div>
+        <div class="materia-tag"><span class="icon">🌍</span> Sociales</div>
+        <div class="materia-tag"><span class="icon">🌐</span> Inglés</div>
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- CTA -->
 <section class="cta-section">
   <div class="container">
     <div class="cta-card animate-in">
-      <h2>¿Listo para prepararte<br>mejor?</h2>
-      <p>Únete a la lista de espera y sé de los primeros<br>en acceder a PreUrbano cuando lancemos.</p>
-      <div class="cta-form">
-        <div class="form-row" id="ctaFormRow">
-          <input type="email" id="ctaEmailInput" placeholder="tucorreo@ejemplo.com" aria-label="Correo electrónico" />
-          <button class="btn-primary" onclick="handleCtaSubmit()">Quiero acceso</button>
-        </div>
-        <div class="success-msg" id="ctaSuccessMsg">
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8l3.5 3.5L13 4.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          ¡Perfecto! Estás en la lista.
-        </div>
-        <p class="form-hint">
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1a5 5 0 100 10A5 5 0 006 1zm0 4v4m0-5.5v.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-          Sin spam. Solo te avisamos cuando esté listo.
-        </p>
+      <h2>¿Listo para empezar?</h2>
+      <p>Inicia sesión con Google y comienza a practicar gratis ahora mismo.</p>
+      <div style="margin-top:28px">
+        <a href="/auth/google/login" class="btn-google" style="display:inline-flex;padding:12px 28px;font-size:0.95rem;font-weight:600;border-radius:100px;gap:10px">
+          <svg width="18" height="18" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M43.6 20.5H42V20.4H24V27.6H35.2C33.6 32 29.2 35.2 24 35.2C17.4 35.2 12 29.8 12 23.2C12 16.6 17.4 11.2 24 11.2C27.1 11.2 29.9 12.4 32 14.3L37.1 9.2C33.8 6.2 29.1 4.4 24 4.4C13.5 4.4 5 12.9 5 23.4C5 33.9 13.5 42.4 24 42.4C34.5 42.4 43 33.9 43 23.4C43 22.4 42.9 21.4 42.7 20.5H43.6Z" fill="#FFC107"/>
+            <path d="M6.3 14.7L12.3 19C13.9 14.9 18.6 12 24 12C27.1 12 29.9 13.2 32 15.1L37.1 10C33.8 7 29.1 5.2 24 5.2C16.3 5.2 9.7 9.2 6.3 14.7Z" fill="#FF3D00"/>
+            <path d="M24 43.2C29 43.2 33.6 41.5 37.2 38.6L31.6 33.8C29.6 35.3 27 36.2 24 36.2C18.8 36.2 14.4 33 12.8 28.6L6.8 33.8C10.1 39.3 16.6 43.2 24 43.2Z" fill="#4CAF50"/>
+            <path d="M43.6 20.5H42V20.4H24V27.6H35.2C34.4 30 33 32.1 31.6 33.8L37.2 38.6C36.8 38.9 43 34.2 43 23.4C43 22.4 42.9 21.4 42.7 20.5H43.6Z" fill="#1976D2"/>
+          </svg>
+          Iniciar sesión con Google
+        </a>
       </div>
     </div>
   </div>
@@ -150,6 +186,6 @@
   </div>
 </footer>
 
-<script src="/static/landing/landing.js?v=3" defer></script>
+<script src="/static/landing/landing.js?v=4" defer></script>
 </body>
 </html>
