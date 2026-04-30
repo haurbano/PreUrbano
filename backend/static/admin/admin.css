@@ -76,8 +76,14 @@ tbody tr.clickable { cursor: pointer; }
 .modal-overlay.hidden { display: none; }
 .modal {
   background: var(--surface); border: 1px solid var(--border);
-  border-radius: 20px; padding: 32px; width: 100%; max-width: 440px;
+  border-radius: 20px; width: 100%; max-width: 440px;
   position: relative;
+  max-height: calc(100vh - 48px);
+  display: flex; flex-direction: column; overflow: hidden;
+}
+.modal-scroll-body {
+  overflow-y: auto; flex: 1; min-height: 0;
+  padding: 32px;
 }
 .modal-close {
   position: absolute; top: 16px; right: 16px;
@@ -268,6 +274,7 @@ tbody tr.clickable { cursor: pointer; }
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  padding: 32px;
 }
 #sim-list-modal #sim-list-body {
   overflow-y: auto;

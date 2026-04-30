@@ -29,24 +29,26 @@
 <div class="modal-overlay hidden" id="user-modal" onclick="closeModal(event)">
   <div class="modal">
     <button class="modal-close" onclick="document.getElementById('user-modal').classList.add('hidden')">✕</button>
-    <div class="modal-header">
-      <div id="modal-avatar"></div>
-      <div>
-        <div class="modal-name" id="modal-name"></div>
-        <div class="modal-email" id="modal-email"></div>
+    <div class="modal-scroll-body">
+      <div class="modal-header">
+        <div id="modal-avatar"></div>
+        <div>
+          <div class="modal-name" id="modal-name"></div>
+          <div class="modal-email" id="modal-email"></div>
+        </div>
       </div>
+      <div class="modal-fields">
+        <div class="modal-field"><span class="lbl">Documento</span><span class="val" id="modal-document"></span></div>
+        <div class="modal-field"><span class="lbl">Teléfono</span><span class="val" id="modal-phone"></span></div>
+        <div class="modal-field"><span class="lbl">Institución</span><span class="val" id="modal-institution"></span></div>
+        <div class="modal-field"><span class="lbl">Grado</span><span class="val" id="modal-grade"></span></div>
+        <div class="modal-field"><span class="lbl">Estado</span><span class="val" id="modal-status"></span></div>
+        <div class="modal-field"><span class="lbl">Registro</span><span class="val" id="modal-created"></span></div>
+      </div>
+      <div id="modal-sim-section" style="display:none"></div>
+      <button class="btn" id="modal-toggle-btn" style="margin-top:20px;width:100%" onclick="toggleUser()"></button>
+      <button class="btn" id="modal-delete-btn" style="margin-top:8px;width:100%;background:#ef4444;border-color:#ef4444" onclick="deleteUser()">Eliminar usuario</button>
     </div>
-    <div class="modal-fields">
-      <div class="modal-field"><span class="lbl">Documento</span><span class="val" id="modal-document"></span></div>
-      <div class="modal-field"><span class="lbl">Teléfono</span><span class="val" id="modal-phone"></span></div>
-      <div class="modal-field"><span class="lbl">Institución</span><span class="val" id="modal-institution"></span></div>
-      <div class="modal-field"><span class="lbl">Grado</span><span class="val" id="modal-grade"></span></div>
-      <div class="modal-field"><span class="lbl">Estado</span><span class="val" id="modal-status"></span></div>
-      <div class="modal-field"><span class="lbl">Registro</span><span class="val" id="modal-created"></span></div>
-    </div>
-    <div id="modal-sim-section" style="display:none"></div>
-    <button class="btn" id="modal-toggle-btn" style="margin-top:20px;width:100%" onclick="toggleUser()"></button>
-    <button class="btn" id="modal-delete-btn" style="margin-top:8px;width:100%;background:#ef4444;border-color:#ef4444" onclick="deleteUser()">Eliminar usuario</button>
   </div>
 </div>
 
