@@ -41,16 +41,20 @@ ssh haurbano@192.168.1.66 "cd /home/haurbano/preurbano-new && git pull && docker
 backend/
 ├── main.py              # FastAPI app, middlewares, routers
 ├── auth.py              # JWT admin + JWT estudiante
-├── database.py          # SQLAlchemy engine + SessionLocal
-├── models.py            # Subscriber, User, Question
+├── database.py          # SQLAlchemy engine + SessionLocal (db.sqlite)
+├── models.py            # Subscriber, User, Question  ← solo modelos de negocio
 ├── schemas.py           # Pydantic schemas
 ├── admin.html           # Panel admin (SPA vanilla JS)
 ├── student.html         # App estudiante (SPA vanilla JS)
+├── analytics/           # Observabilidad — DB separada (analytics.sqlite)
+│   ├── database.py      # Engine SQLAlchemy apuntando a analytics.sqlite
+│   └── models.py        # ImageLoadError (y futuros eventos de observabilidad)
 ├── routers/
 │   ├── subscribe.py     # POST /api/subscribe
 │   ├── admin.py         # /admin/* (login, subscribers, users)
 │   ├── auth.py          # /auth/google/* + /auth/me + /auth/profile
-│   └── questions.py     # /admin/questions/* (banco de preguntas)
+│   ├── questions.py     # /admin/questions/* (banco de preguntas)
+│   └── logs.py          # POST /api/log/image-error (analytics)
 └── Dockerfile
 ```
 
@@ -110,6 +114,33 @@ security find-generic-password -a haurbano -s homelab-ubuntu-vm -w  # sudo passw
 ## Google OAuth
 - Client ID: `490876903878-o68vi27ajtkh6pbb4aackvirtiqegh1d.apps.googleusercontent.com`
 - Redirect URI registrada: `https://preurbano.com/auth/google/callback`
+
+## Analytics (observabilidad)
+
+Base de datos separada del negocio: `/app/data/analytics.sqlite` (mismo volume `./data`).
+Modelos y engine en `backend/analytics/` — nunca mezclar con `models.py` ni `database.py` de negocio.
+
+### Consultas útiles
+
+```bash
+# Ver todos los errores de carga de imágenes
+ssh haurbano@192.168.1.66 "docker exec preurbano-new-backend-1 python3 -c \"
+import sqlite3
+rows = sqlite3.connect('/app/data/analytics.sqlite').execute(
+  'SELECT id, question_id, image_path, attempts, user_id, user_agent, created_at FROM image_load_errors ORDER BY created_at DESC'
+).fetchall()
+for r in rows: print(r)
+\""
+
+# Contar errores por pregunta (las más problemáticas primero)
+ssh haurbano@192.168.1.66 "docker exec preurbano-new-backend-1 python3 -c \"
+import sqlite3
+rows = sqlite3.connect('/app/data/analytics.sqlite').execute(
+  'SELECT question_id, image_path, COUNT(*) as total FROM image_load_errors GROUP BY question_id ORDER BY total DESC'
+).fetchall()
+for r in rows: print(r)
+\""
+```
 
 ## Backlog
 Ver `BACKLOG.md`.
