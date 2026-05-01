@@ -1,3 +1,35 @@
+const _imgRetries = {};
+
+function handleImgError(img, questionId, imagePath) {
+  const key = `q${questionId}`;
+  _imgRetries[key] = (_imgRetries[key] || 0) + 1;
+  const attempt = _imgRetries[key];
+  if (attempt <= 2) {
+    setTimeout(() => {
+      img.src = `/uploads/${imagePath}?r=${attempt}&t=${Date.now()}`;
+    }, 1500 * attempt);
+  } else {
+    img.style.display = 'none';
+    const msg = document.createElement('div');
+    msg.className = 'sim-img-error';
+    msg.textContent = 'No se pudo cargar la imagen. Intenta recargar la página.';
+    img.parentNode.insertBefore(msg, img.nextSibling);
+    reportImageError(questionId, imagePath, attempt);
+    delete _imgRetries[key];
+  }
+}
+
+async function reportImageError(questionId, imagePath, attempts) {
+  try {
+    await fetch('/api/log/image-error', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ question_id: questionId, image_path: imagePath, attempts }),
+    });
+  } catch {}
+}
+
 let currentUser = null;
 let _sim = null;
 let _timerInterval = null;
@@ -360,7 +392,7 @@ function renderSimQuestion() {
       ${timerHtml}
     </div>
     <div class="sim-question-img-wrap">
-      <img class="sim-question-img" src="/uploads/${q.image_path}" alt="Pregunta ${current}" />
+      <img class="sim-question-img" src="/uploads/${q.image_path}" onerror="handleImgError(this,${q.id},'${q.image_path}')" alt="Pregunta ${current}" />
     </div>
     <div class="sim-options">${opts}</div>
     <button class="sim-nav-btn" onclick="${isLast ? 'submitSim()' : 'nextQuestion()'}">${isLast ? 'Entregar práctica' : 'Siguiente'}</button>`;
@@ -616,7 +648,7 @@ function renderCuradoQuestion() {
         ${timerHtml}
       </div>
       <div class="sim-question-img-wrap">
-        <img class="sim-question-img" src="/uploads/${q.image_path}" alt="Pregunta ${current}" />
+        <img class="sim-question-img" src="/uploads/${q.image_path}" onerror="handleImgError(this,${q.id},'${q.image_path}')" alt="Pregunta ${current}" />
       </div>
       <div class="sim-options">${opts}</div>
       <button class="sim-nav-btn" onclick="${isLast ? 'submitCurado()' : 'nextCuradoQuestion()'}">

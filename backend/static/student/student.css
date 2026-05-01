@@ -442,3 +442,10 @@ sidebar {
   border: 1px solid rgba(108, 99, 255, 0.2);
   border-radius: 100px; padding: 5px 14px; margin-top: 10px;
 }
+
+/* ── Image load error fallback ── */
+.sim-img-error {
+  padding: 16px; border-radius: 12px;
+  background: #fef2f2; color: #b91c1c;
+  font-size: 0.88rem; text-align: center; margin: 16px 0;
+}
