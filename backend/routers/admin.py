@@ -8,7 +8,9 @@ from schemas import (
     LoginRequest,
     TokenResponse,
     SubscriberOut,
+    SubscribersListOut,
     UserOut,
+    UsersListOut,
     UserEnableUpdate,
     SimulationConfigOut,
     SimulationConfigUpdate,
@@ -37,20 +39,40 @@ def login(body: LoginRequest):
     return {"access_token": create_token()}
 
 
-@router.get("/subscribers", response_model=list[SubscriberOut])
+@router.get("/subscribers", response_model=SubscribersListOut)
 def list_subscribers(
+    page: int = Query(1, ge=1),
+    page_size: int = Query(50, ge=1, le=200),
     db: Session = Depends(get_db),
     _: str = Depends(verify_token),
 ):
-    return db.query(Subscriber).order_by(Subscriber.created_at.desc()).all()
+    query = db.query(Subscriber).order_by(Subscriber.created_at.desc())
+    total = query.count()
+    total_hero = db.query(Subscriber).filter(Subscriber.source == "hero").count()
+    pages = (total + page_size - 1) // page_size if total > 0 else 1
+    items = query.offset((page - 1) * page_size).limit(page_size).all()
+    return SubscribersListOut(
+        items=items, total=total, total_hero=total_hero, total_cta=total - total_hero,
+        page=page, page_size=page_size, pages=pages,
+    )
 
 
-@router.get("/users", response_model=list[UserOut])
+@router.get("/users", response_model=UsersListOut)
 def list_users(
+    page: int = Query(1, ge=1),
+    page_size: int = Query(50, ge=1, le=200),
     db: Session = Depends(get_db),
     _: str = Depends(verify_token),
 ):
-    return db.query(User).filter(User.is_deleted == False).order_by(User.created_at.desc()).all()
+    query = db.query(User).filter(User.is_deleted == False)
+    total = query.count()
+    total_active = db.query(User).filter(User.is_deleted == False, User.is_active == True).count()
+    pages = (total + page_size - 1) // page_size if total > 0 else 1
+    items = query.order_by(User.created_at.desc()).offset((page - 1) * page_size).limit(page_size).all()
+    return UsersListOut(
+        items=items, total=total, total_active=total_active,
+        page=page, page_size=page_size, pages=pages,
+    )
 
 
 @router.patch("/users/{user_id}", response_model=UserOut)
@@ -157,15 +179,26 @@ def list_students(
     _: str = Depends(verify_token),
 ):
     users = db.query(User).filter(User.is_deleted == False).order_by(User.created_at.desc()).all()
+    if not users:
+        return StudentsListOut(items=[], total=0)
+
+    user_ids = [u.id for u in users]
+    all_results = (
+        db.query(SimulationResult)
+        .filter(SimulationResult.user_id.in_(user_ids))
+        .order_by(SimulationResult.created_at.desc())
+        .all()
+    )
+
+    results_by_user: dict[int, list] = {}
+    for r in all_results:
+        bucket = results_by_user.setdefault(r.user_id, [])
+        if len(bucket) < 10:
+            bucket.append(r)
+
     items = []
     for user in users:
-        results = (
-            db.query(SimulationResult)
-            .filter(SimulationResult.user_id == user.id)
-            .order_by(SimulationResult.created_at.desc())
-            .limit(10)
-            .all()
-        )
+        results = results_by_user.get(user.id, [])
         total_sim = len(results)
         total_questions = sum(r.total_questions for r in results)
         total_correct = sum(r.correct_answers for r in results)

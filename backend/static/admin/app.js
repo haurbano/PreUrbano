@@ -1,6 +1,6 @@
 import { TOKEN_KEY, token, logout, showToast } from './shared.js?v=3';
-import { loadSubscribers } from './subscribers.js?v=3';
-import { loadUsers, openUserModal, toggleUser, closeModal, deleteUser } from './users.js?v=5';
+import { loadSubscribers } from './subscribers.js?v=4';
+import { loadUsers, openUserModal, toggleUser, closeModal, deleteUser } from './users.js?v=6';
 import {
   setFile, updateSaveBtn, handleDragOver, handleDragLeave, handleDrop,
   saveQuestion, loadQuestions, handleQuestionRowClick,

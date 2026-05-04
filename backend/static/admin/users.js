@@ -22,10 +22,10 @@ export async function loadUsers() {
     const studentsMap = {};
     for (const s of studentsData.items) studentsMap[s.user_id] = s;
 
-    document.getElementById('stat-users-total').textContent  = users.length;
-    document.getElementById('stat-users-active').textContent = users.filter(u => u.is_active).length;
+    document.getElementById('stat-users-total').textContent  = users.total;
+    document.getElementById('stat-users-active').textContent = users.total_active;
 
-    if (!users.length) {
+    if (!users.items.length) {
       wrap.innerHTML = '<div class="empty-state">Aún no hay usuarios registrados.</div>';
       return;
     }
@@ -33,7 +33,7 @@ export async function loadUsers() {
     wrap.innerHTML = `
       <table>
         <thead><tr><th>#</th><th>Usuario</th><th>Email</th><th>Sims</th><th>Promedio</th><th>Último</th><th>Estado</th><th>Registro</th></tr></thead>
-        <tbody>${users.map((u, i) => {
+        <tbody>${users.items.map((u, i) => {
           const s = studentsMap[u.id] || {};
           const scoreClass = s.avg_score >= 60 ? 'high' : 'low';
           const lastDate = s.last_sim_date

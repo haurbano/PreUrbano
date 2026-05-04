@@ -31,6 +31,16 @@ class SubscriberOut(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class SubscribersListOut(BaseModel):
+    items: list[SubscriberOut]
+    total: int
+    total_hero: int
+    total_cta: int
+    page: int
+    page_size: int
+    pages: int
+
+
 class LoginRequest(BaseModel):
     password: str
 
@@ -103,6 +113,15 @@ class QuestionGroupDetail(BaseModel):
     questions: list[QuestionOut]
 
     model_config = {"from_attributes": True}
+
+
+class UsersListOut(BaseModel):
+    items: list[UserOut]
+    total: int
+    total_active: int
+    page: int
+    page_size: int
+    pages: int
 
 
 class UserEnableUpdate(BaseModel):
