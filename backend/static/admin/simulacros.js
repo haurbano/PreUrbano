@@ -1,12 +1,4 @@
-import { token, showToast } from './shared.js?v=3';
-
-const SUBJECT_LABELS = {
-  matematicas: 'Matemáticas',
-  ciencias_naturales: 'Ciencias Naturales',
-  lectura_critica: 'Lectura Crítica',
-  sociales: 'Sociales',
-  ingles: 'Inglés',
-};
+import { token, showToast, SUBJECT_LABELS } from './shared.js?v=4';
 
 let _simEditor = null;
 let _simBancoPg = 1;

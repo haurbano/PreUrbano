@@ -1,6 +1,6 @@
-import { TOKEN_KEY, token, logout, showToast } from './shared.js?v=3';
-import { loadSubscribers } from './subscribers.js?v=4';
-import { loadUsers, openUserModal, toggleUser, closeModal, deleteUser } from './users.js?v=6';
+import { TOKEN_KEY, token, logout, showToast } from './shared.js?v=4';
+import { loadSubscribers } from './subscribers.js?v=5';
+import { loadUsers, openUserModal, toggleUser, closeModal, deleteUser } from './users.js?v=7';
 import {
   setFile, updateSaveBtn, handleDragOver, handleDragLeave, handleDrop,
   saveQuestion, loadQuestions, handleQuestionRowClick,
@@ -8,7 +8,7 @@ import {
   handleGroupSelectChange, saveGroupAssignment,
   setReplaceFile, handleReplaceDragOver, handleReplaceDragLeave, handleReplaceDrop,
   replaceQuestionImage,
-} from './questions.js?v=4';
+} from './questions.js?v=5';
 import { loadSimConfig, saveSimConfig } from './simconfig.js?v=3';
 import {
   loadSimulacros, openSimulacroEditor, saveSimulacro,
@@ -16,7 +16,7 @@ import {
   addQuestionToSim, removeQuestionFromSim, moveQuestionInSim,
   openSimulacroResults,
   simChangeBancoSubject, simBancoPrevPage, simBancoNextPage,
-} from './simulacros.js?v=1';
+} from './simulacros.js?v=2';
 
 let currentView = 'subscribers';
 

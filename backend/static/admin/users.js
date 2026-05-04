@@ -1,4 +1,4 @@
-import { token, logout, showToast } from './shared.js';
+import { token, logout, showToast, SUBJECT_LABELS_SHORT, SUBJECT_COLORS } from './shared.js?v=4';
 
 function fmtDuration(s) {
   if (s == null) return '—';
@@ -103,16 +103,15 @@ window.openStudentSimulations = async function(userId, userName) {
     const data = await res.json();
 
     if (!data.items.length) {
-      alert('No hay simulacros para este estudiante.');
+      showToast('No hay simulacros para este estudiante.');
       return;
     }
 
     const rows = data.items.map(sim => {
       const scoreClass = sim.score_pct >= 60 ? 'high' : 'low';
       const bdChips = Object.entries(sim.breakdown || {}).map(([subj, bd]) => {
-        const colors = { matematicas: '#a59dff', ciencias_naturales: '#34d399', lectura_critica: '#7dd3fc', sociales: '#fbbf24', ingles: '#f87171' };
-        const labels = { matematicas: 'Mate', ciencias_naturales: 'Ciencias', lectura_critica: 'Lectura', sociales: 'Sociales', ingles: 'Inglés' };
-        return `<span class="bd-mini" style="background:${colors[subj]}22;color:${colors[subj]}">${labels[subj]}: ${bd.correct}/${bd.total}</span>`;
+        const color = SUBJECT_COLORS[subj] || '#999';
+        return `<span class="bd-mini" style="background:${color}22;color:${color}">${SUBJECT_LABELS_SHORT[subj] || subj}: ${bd.correct}/${bd.total}</span>`;
       }).join('');
       return `<tr>
         <td style="color:var(--muted);white-space:nowrap">${new Date(sim.created_at).toLocaleDateString('es-CO')}</td>
@@ -131,7 +130,7 @@ window.openStudentSimulations = async function(userId, userName) {
         <tbody>${rows}</tbody>
       </table>`;
     document.getElementById('sim-list-modal').classList.remove('hidden');
-  } catch { alert('Error al cargar simulacros.'); }
+  } catch { showToast('Error al cargar simulacros.'); }
 };
 
 export async function toggleUser() {
@@ -148,14 +147,14 @@ export async function toggleUser() {
       body: JSON.stringify({ is_active: !currentModalUser.is_active }),
     });
     if (res.status === 401) { logout(); return; }
-    if (!res.ok) { alert('Error al actualizar.'); return; }
+    if (!res.ok) { showToast('Error al actualizar.'); return; }
     const updated = await res.json();
     currentModalUser = { ...currentModalUser, ...updated, simData: currentModalUser.simData };
     document.getElementById('modal-status').innerHTML = `<span class="badge ${updated.is_active ? 'badge-active' : 'badge-off'}">${updated.is_active ? 'activo' : 'inactivo'}</span>`;
     btn.textContent      = updated.is_active ? 'Bloquear usuario' : 'Habilitar usuario';
     btn.style.background = updated.is_active ? 'var(--red)' : 'var(--green)';
     loadUsers();
-  } catch { alert('Error de conexión.'); }
+  } catch { showToast('Error de conexión.'); }
   btn.disabled = false;
 }
 
@@ -179,13 +178,13 @@ export async function deleteUser() {
       headers: { Authorization: `Bearer ${token()}` },
     });
     if (res.status === 401) { logout(); return; }
-    if (!res.ok) { alert('Error al eliminar usuario.'); btn.disabled = false; btn.textContent = 'Eliminar usuario'; return; }
+    if (!res.ok) { showToast('Error al eliminar usuario.'); btn.disabled = false; btn.textContent = 'Eliminar usuario'; return; }
 
     document.getElementById('user-modal').classList.add('hidden');
     await loadUsers();
     showToast(`✓ ${name} eliminado`);
   } catch {
-    alert('Error de conexión.');
+    showToast('Error de conexión.');
     btn.disabled = false;
     btn.textContent = 'Eliminar usuario';
   }

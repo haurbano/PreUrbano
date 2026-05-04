@@ -1,4 +1,4 @@
-import { token, logout, showToast, subjectLabel } from './shared.js';
+import { token, logout, showToast, subjectLabel, uploadUrl } from './shared.js?v=4';
 
 export let selectedFile = null;
 let _replaceFile = null;
@@ -17,7 +17,7 @@ export function updateSaveBtn() {
 
 export function setFile(file) {
   if (!file) return;
-  if (file.size > 20 * 1024 * 1024) { alert('La imagen supera el límite de 20 MB.'); return; }
+  if (file.size > 20 * 1024 * 1024) { showToast('La imagen supera el límite de 20 MB.'); return; }
   selectedFile = file;
   document.getElementById('drop-zone-filename').textContent = file.name;
   document.getElementById('drop-zone').classList.add('has-file');
@@ -60,7 +60,7 @@ export async function saveQuestion() {
       body: fd,
     });
     if (res.status === 401) { logout(); return; }
-    if (!res.ok) { alert('Error: ' + (await res.text())); }
+    if (!res.ok) { showToast('Error al guardar pregunta.'); }
     else {
       selectedFile = null;
       document.getElementById('drop-zone-filename').textContent = '';
@@ -73,7 +73,7 @@ export async function saveQuestion() {
       document.getElementById('table-questions').scrollIntoView({ behavior: 'smooth', block: 'start' });
       showToast('✓ Pregunta guardada');
     }
-  } catch { alert('Error de conexión.'); }
+  } catch { showToast('Error de conexión.'); }
 
   btn.disabled = false;
   btn.textContent = 'Guardar';
@@ -98,7 +98,7 @@ export async function loadQuestions(page) {
     data.items.forEach(q => { _questionsCache[q.id] = q; });
     const rows = data.items.map(q => `
       <tr class="clickable" onclick="handleQuestionRowClick(${q.id})">
-        <td><img class="q-thumb" src="https://preurbano.com/uploads/${q.image_path}" /></td>
+        <td><img class="q-thumb" src="${uploadUrl(q.image_path)}" /></td>
         <td>
           <span class="badge badge-${q.subject}">${subjectLabel(q.subject)}</span>
           ${q.group_id ? '<span title="Parte de un conjunto" style="margin-left:4px">📎</span>' : ''}
@@ -200,7 +200,7 @@ export async function saveGroupAssignment(questionId) {
         headers: { Authorization: `Bearer ${token()}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, subject }),
       });
-      if (!cr.ok) { alert('Error al crear grupo.'); return; }
+      if (!cr.ok) { showToast('Error al crear grupo.'); return; }
       groupId = (await cr.json()).id;
       _groupsCache[subject] = null;
     } else if (val !== '') {
@@ -214,7 +214,7 @@ export async function saveGroupAssignment(questionId) {
       body: JSON.stringify(body),
     });
     if (res.status === 401) { logout(); return; }
-    if (!res.ok) { const e = await res.json(); alert(e.detail || 'Error al asignar grupo.'); return; }
+    if (!res.ok) { const e = await res.json(); showToast(e.detail || 'Error al asignar grupo.'); return; }
 
     const updated = await res.json();
     _detailQuestion = updated;
@@ -225,7 +225,7 @@ export async function saveGroupAssignment(questionId) {
     const row = document.getElementById('new-group-row');
     if (row) row.style.display = 'none';
     showToast('✓ Grupo actualizado');
-  } catch { alert('Error de conexión.'); }
+  } catch { showToast('Error de conexión.'); }
 
   if (btn) { btn.disabled = false; btn.textContent = 'Asignar'; }
 }
@@ -243,7 +243,7 @@ export function openQuestionDetail(q) {
     `<span class="badge badge-option">Respuesta correcta: ${q.correct_option}</span>` +
     (q.group_id ? `<span class="badge" style="background:var(--blue,#3b82f6);color:#fff">📎 Conjunto</span>` : '');
 
-  document.getElementById('detail-image').src = `https://preurbano.com/uploads/${q.image_path}`;
+  document.getElementById('detail-image').src = uploadUrl(q.image_path);
 
   document.getElementById('detail-actions').innerHTML = `
     <div style="display:flex;flex-direction:column;gap:18px">
@@ -332,14 +332,14 @@ export async function saveQuestionEdit(id) {
       body: JSON.stringify({ subject, correct_option }),
     });
     if (res.status === 401) { logout(); return; }
-    if (!res.ok) { alert('Error al guardar.'); return; }
+    if (!res.ok) { showToast('Error al guardar.'); return; }
     const updated = await res.json();
     _detailQuestion = updated;
     document.getElementById('detail-meta').innerHTML =
       `<span class="badge badge-${updated.subject}">${subjectLabel(updated.subject)}</span>` +
       `<span class="badge badge-option">Respuesta correcta: ${updated.correct_option}</span>`;
     showToast('✓ Cambios guardados');
-  } catch { alert('Error de conexión.'); }
+  } catch { showToast('Error de conexión.'); }
 }
 
 export async function deleteQuestion(id) {
@@ -350,7 +350,7 @@ export async function deleteQuestion(id) {
     });
     if (res.status === 401) { logout(); return; }
     await loadQuestions();
-  } catch { alert('Error al eliminar pregunta.'); }
+  } catch { showToast('Error al eliminar pregunta.'); }
 }
 
 export async function deleteQuestionFromDetail(id) {
@@ -361,12 +361,12 @@ export async function deleteQuestionFromDetail(id) {
     });
     if (res.status === 401) { logout(); return; }
     window.backToQuestions();
-  } catch { alert('Error al eliminar pregunta.'); }
+  } catch { showToast('Error al eliminar pregunta.'); }
 }
 
 export function setReplaceFile(file) {
   if (!file) return;
-  if (file.size > 20 * 1024 * 1024) { alert('La imagen supera el límite de 20 MB.'); return; }
+  if (file.size > 20 * 1024 * 1024) { showToast('La imagen supera el límite de 20 MB.'); return; }
   _replaceFile = file;
   document.getElementById('replace-drop-zone-filename').textContent = file.name;
   document.getElementById('replace-drop-zone').classList.add('has-file');
@@ -402,17 +402,17 @@ export async function replaceQuestionImage(id) {
       body: fd,
     });
     if (res.status === 401) { logout(); return; }
-    if (!res.ok) { alert('Error: ' + (await res.text())); btn.disabled = false; btn.textContent = 'Reemplazar imagen'; return; }
+    if (!res.ok) { showToast('Error al reemplazar imagen.'); btn.disabled = false; btn.textContent = 'Reemplazar imagen'; return; }
     const updated = await res.json();
     _detailQuestion = updated;
     _questionsCache[id] = updated;
     _replaceFile = null;
-    document.getElementById('detail-image').src = `https://preurbano.com/uploads/${updated.image_path}?t=${Date.now()}`;
+    document.getElementById('detail-image').src = `${uploadUrl(updated.image_path)}?t=${Date.now()}`;
     document.getElementById('replace-drop-zone-filename').textContent = '';
     document.getElementById('replace-drop-zone').classList.remove('has-file');
     document.getElementById('replace-file-input').value = '';
     showToast('✓ Imagen reemplazada');
-  } catch { alert('Error de conexión.'); }
+  } catch { showToast('Error de conexión.'); }
   btn.disabled = false;
   btn.textContent = 'Reemplazar imagen';
 }

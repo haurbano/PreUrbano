@@ -1,20 +1,4 @@
-import { token, logout } from './shared.js';
-
-const SUBJECT_LABELS = {
-  matematicas: 'Matemáticas',
-  ciencias_naturales: 'Ciencias',
-  lectura_critica: 'Lectura',
-  sociales: 'Sociales',
-  ingles: 'Inglés',
-};
-
-const SUBJECT_COLORS = {
-  matematicas: '#a59dff',
-  ciencias_naturales: '#34d399',
-  lectura_critica: '#7dd3fc',
-  sociales: '#fbbf24',
-  ingles: '#f87171',
-};
+import { token, logout, SUBJECT_LABELS_SHORT, SUBJECT_COLORS } from './shared.js?v=4';
 
 export async function loadStudents() {
   const wrap = document.getElementById('table-students');
@@ -85,7 +69,7 @@ window.openStudentModal = async function(s) {
         const simScoreClass = sim.score_pct >= 60 ? 'high' : 'low';
         const bdChips = Object.entries(sim.breakdown || {}).map(([subj, bd]) => {
           const color = SUBJECT_COLORS[subj] || '#999';
-          return `<span class="bd-mini" style="background:${color}22;color:${color}">${SUBJECT_LABELS[subj] || subj}: ${bd.correct}/${bd.total}</span>`;
+          return `<span class="bd-mini" style="background:${color}22;color:${color}">${SUBJECT_LABELS_SHORT[subj] || subj}: ${bd.correct}/${bd.total}</span>`;
         }).join('');
         return `<tr>
           <td style="color:var(--muted);white-space:nowrap">${new Date(sim.created_at).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' })}</td>

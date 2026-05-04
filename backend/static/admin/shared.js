@@ -12,6 +12,28 @@ export const SUBJECT_LABELS = {
   ingles: 'Inglés',
 };
 
+export const SUBJECT_LABELS_SHORT = {
+  matematicas: 'Mate',
+  ciencias_naturales: 'Ciencias',
+  lectura_critica: 'Lectura',
+  sociales: 'Sociales',
+  ingles: 'Inglés',
+};
+
+export const SUBJECT_COLORS = {
+  matematicas: '#a59dff',
+  ciencias_naturales: '#34d399',
+  lectura_critica: '#7dd3fc',
+  sociales: '#fbbf24',
+  ingles: '#f87171',
+};
+
+// admin.preurbano.com no enruta /uploads/ correctamente por el tunnel de Cloudflare
+export function uploadUrl(path) {
+  const base = location.hostname === 'admin.preurbano.com' ? 'https://preurbano.com' : '';
+  return `${base}/uploads/${path}`;
+}
+
 export function subjectLabel(s) {
   return SUBJECT_LABELS[s] || s;
 }

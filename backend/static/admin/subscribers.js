@@ -1,4 +1,4 @@
-import { token, logout } from './shared.js';
+import { token, logout } from './shared.js?v=4';
 
 export async function loadSubscribers() {
   const wrap = document.getElementById('table-subscribers');
