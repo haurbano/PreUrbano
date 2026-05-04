@@ -1,10 +1,10 @@
 # PreUrbano — Plan de Mejoras Pendientes
 
-Generado: 2026-05-04. Ver commits de F1 para el historial de cambios ya aplicados.
+Generado: 2026-05-04. Ver commits de F1 y F2 para el historial de cambios ya aplicados.
 
 ---
 
-## F2 — Fix N+1 en admin students + paginación de endpoints
+## ~~F2 — Fix N+1 en admin students + paginación de endpoints~~ ✅ Completada 2026-05-04
 
 **Objetivo:** Evitar congelamiento del panel admin cuando haya >50 estudiantes.
 
