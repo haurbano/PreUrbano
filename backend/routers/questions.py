@@ -13,6 +13,7 @@ router = APIRouter()
 UPLOADS_DIR = Path("/app/uploads")
 MAX_SIZE = 20 * 1024 * 1024
 ALLOWED_TYPES = {"image/jpeg", "image/png", "image/webp"}
+CONTENT_TYPE_EXT = {"image/jpeg": "jpg", "image/png": "png", "image/webp": "webp"}
 SUBJECTS = {"matematicas", "ciencias_naturales", "lectura_critica", "sociales", "ingles"}
 OPTIONS = {"A", "B", "C", "D"}
 
@@ -43,7 +44,7 @@ async def create_question(
 
     data = await _validate_image_upload(file)
 
-    ext = file.filename.rsplit(".", 1)[-1].lower() if file.filename and "." in file.filename else "jpg"
+    ext = CONTENT_TYPE_EXT[file.content_type]
     filename = f"{uuid.uuid4().hex}.{ext}"
     UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
     (UPLOADS_DIR / filename).write_bytes(data)
@@ -229,7 +230,7 @@ async def replace_question_image(
 
     data = await _validate_image_upload(file)
 
-    ext = file.filename.rsplit(".", 1)[-1].lower() if file.filename and "." in file.filename else "jpg"
+    ext = CONTENT_TYPE_EXT[file.content_type]
     new_filename = f"{uuid.uuid4().hex}.{ext}"
     UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
     (UPLOADS_DIR / new_filename).write_bytes(data)
