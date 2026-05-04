@@ -34,7 +34,11 @@ app = FastAPI(title="PreUrbano API", docs_url=None, redoc_url=None)
 SECRET = os.getenv("JWT_SECRET")
 if not SECRET:
     raise RuntimeError("JWT_SECRET environment variable is required")
-app.add_middleware(SessionMiddleware, secret_key=SECRET)
+
+SESSION_SECRET = os.getenv("SESSION_SECRET")
+if not SESSION_SECRET:
+    raise RuntimeError("SESSION_SECRET environment variable is required")
+app.add_middleware(SessionMiddleware, secret_key=SESSION_SECRET)
 
 origins = os.getenv("CORS_ORIGINS", "https://preurbano.com").split(",")
 app.add_middleware(
