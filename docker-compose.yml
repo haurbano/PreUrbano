@@ -5,6 +5,7 @@ services:
     environment:
       - ADMIN_PASSWORD=${ADMIN_PASSWORD}
       - JWT_SECRET=${JWT_SECRET}
+      - SESSION_SECRET=${SESSION_SECRET}
       - CORS_ORIGINS=${CORS_ORIGINS:-https://preurbano.com}
       - DATABASE_URL=sqlite:////app/data/db.sqlite
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
