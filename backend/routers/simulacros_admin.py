@@ -8,8 +8,16 @@ from schemas import (
     SimulacroResultAdminRow, SimulacroResultsAdminOut, QuestionOut,
 )
 from auth import verify_token
+from utils.scoring import score_pct
 
 router = APIRouter()
+
+
+def _get_simulacro_or_404(sim_id: int, db: Session) -> Simulacro:
+    sim = db.query(Simulacro).filter(Simulacro.id == sim_id).first()
+    if not sim:
+        raise HTTPException(status_code=404, detail="Simulacro no encontrado.")
+    return sim
 
 
 def _build_summary(sim: Simulacro, db: Session) -> SimulacroSummary:
@@ -85,9 +93,7 @@ def get_simulacro(
     db: Session = Depends(get_db),
     _: str = Depends(verify_token),
 ):
-    sim = db.query(Simulacro).filter(Simulacro.id == sim_id).first()
-    if not sim:
-        raise HTTPException(status_code=404, detail="Simulacro no encontrado.")
+    sim = _get_simulacro_or_404(sim_id, db)
     return _build_detail(sim, db)
 
 
@@ -98,9 +104,7 @@ def update_simulacro(
     db: Session = Depends(get_db),
     _: str = Depends(verify_token),
 ):
-    sim = db.query(Simulacro).filter(Simulacro.id == sim_id).first()
-    if not sim:
-        raise HTTPException(status_code=404, detail="Simulacro no encontrado.")
+    sim = _get_simulacro_or_404(sim_id, db)
     if body.name is not None:
         sim.name = body.name
     if body.time_limit_minutes is not None:
@@ -123,9 +127,7 @@ def activate_simulacro(
     db: Session = Depends(get_db),
     _: str = Depends(verify_token),
 ):
-    sim = db.query(Simulacro).filter(Simulacro.id == sim_id).first()
-    if not sim:
-        raise HTTPException(status_code=404, detail="Simulacro no encontrado.")
+    sim = _get_simulacro_or_404(sim_id, db)
     db.query(Simulacro).filter(Simulacro.id != sim_id).update({"is_active": False})
     sim.is_active = True
     db.commit()
@@ -139,9 +141,7 @@ def deactivate_simulacro(
     db: Session = Depends(get_db),
     _: str = Depends(verify_token),
 ):
-    sim = db.query(Simulacro).filter(Simulacro.id == sim_id).first()
-    if not sim:
-        raise HTTPException(status_code=404, detail="Simulacro no encontrado.")
+    sim = _get_simulacro_or_404(sim_id, db)
     sim.is_active = False
     db.commit()
     db.refresh(sim)
@@ -154,9 +154,7 @@ def delete_simulacro(
     db: Session = Depends(get_db),
     _: str = Depends(verify_token),
 ):
-    sim = db.query(Simulacro).filter(Simulacro.id == sim_id).first()
-    if not sim:
-        raise HTTPException(status_code=404, detail="Simulacro no encontrado.")
+    sim = _get_simulacro_or_404(sim_id, db)
     if sim.is_active:
         raise HTTPException(status_code=409, detail="Desactiva el simulacro antes de eliminarlo.")
     db.delete(sim)
@@ -169,9 +167,7 @@ def get_simulacro_results(
     db: Session = Depends(get_db),
     _: str = Depends(verify_token),
 ):
-    sim = db.query(Simulacro).filter(Simulacro.id == sim_id).first()
-    if not sim:
-        raise HTTPException(status_code=404, detail="Simulacro no encontrado.")
+    sim = _get_simulacro_or_404(sim_id, db)
     results = (
         db.query(SimulacroResult)
         .filter(SimulacroResult.simulacro_id == sim_id)
@@ -183,7 +179,7 @@ def get_simulacro_results(
     rows = []
     for r in results:
         u = users.get(r.user_id)
-        score = round((r.correct_answers / r.total_questions) * 100) if r.total_questions else 0
+        score = score_pct(r.correct_answers, r.total_questions)
         rows.append(SimulacroResultAdminRow(
             id=r.id,
             user_id=r.user_id,

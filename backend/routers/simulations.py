@@ -14,6 +14,7 @@ from schemas import (
 )
 from auth import verify_user_token_cookie
 from utils.session_store import TTLDict
+from utils.scoring import score_pct, compute_breakdown
 
 router = APIRouter()
 
@@ -124,23 +125,10 @@ def submit_simulation(
         return SimulationSubmitOut(score=0, total=0, correct=0, incorrect=0, breakdown={})
 
     answers_map = {a["question_id"]: a["selected_option"] for a in body.answers}
-
-    correct = 0
-    breakdown: dict[str, dict[str, int]] = {}
-    for q in questions_data:
-        subject = q["subject"]
-        if subject not in breakdown:
-            breakdown[subject] = {"correct": 0, "total": 0}
-        breakdown[subject]["total"] += 1
-
-        selected = answers_map.get(q["id"])
-        if selected == q["correct_option"]:
-            correct += 1
-            breakdown[subject]["correct"] += 1
-
+    correct, breakdown = compute_breakdown(questions_data, answers_map)
     total = len(questions_data)
     incorrect = total - correct
-    score = round((correct / total) * 100) if total > 0 else 0
+    score = score_pct(correct, total)
 
     user_id = int(token_data["sub"])
     result = SimulationResult(
@@ -198,14 +186,13 @@ def get_student_progress(
             agg = by_subject.setdefault(subject, {"correct": 0, "total": 0})
             agg["correct"] += bd.get("correct", 0)
             agg["total"] += bd.get("total", 0)
-        score_pct = round((r.correct_answers / r.total_questions) * 100) if r.total_questions else 0
         simulations.append({
             "id": r.id,
             "created_at": r.created_at,
             "total_questions": r.total_questions,
             "correct_answers": r.correct_answers,
             "incorrect_answers": r.total_questions - r.correct_answers,
-            "score_pct": score_pct,
+            "score_pct": score_pct(r.correct_answers, r.total_questions),
             "breakdown": r.breakdown or {},
         })
 

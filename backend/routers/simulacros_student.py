@@ -9,6 +9,7 @@ from schemas import (
 )
 from auth import verify_user_token_cookie
 from utils.session_store import TTLDict
+from utils.scoring import score_pct, compute_breakdown
 
 router = APIRouter()
 
@@ -35,7 +36,7 @@ def get_active_simulacro(
     ).first()
 
     if result:
-        score = round((result.correct_answers / result.total_questions) * 100) if result.total_questions else 0
+        score = score_pct(result.correct_answers, result.total_questions)
         last_result = SimulacroSubmitOut(
             score=score,
             total=result.total_questions,
@@ -132,19 +133,9 @@ def submit_simulacro(
         raise HTTPException(status_code=400, detail="Sesión inválida.")
 
     answers_map = {a["question_id"]: a["selected_option"] for a in body.answers}
-    correct = 0
-    breakdown: dict = {}
-    for q in session["questions"]:
-        subject = q["subject"]
-        if subject not in breakdown:
-            breakdown[subject] = {"correct": 0, "total": 0}
-        breakdown[subject]["total"] += 1
-        if answers_map.get(q["id"]) == q["correct_option"]:
-            correct += 1
-            breakdown[subject]["correct"] += 1
-
+    correct, breakdown = compute_breakdown(session["questions"], answers_map)
     total = len(session["questions"])
-    score = round((correct / total) * 100) if total > 0 else 0
+    score = score_pct(correct, total)
 
     try:
         result = SimulacroResult(
@@ -164,7 +155,7 @@ def submit_simulacro(
             SimulacroResult.user_id == user_id,
         ).first()
         if existing:
-            existing_score = round((existing.correct_answers / existing.total_questions) * 100) if existing.total_questions else 0
+            existing_score = score_pct(existing.correct_answers, existing.total_questions)
             return SimulacroSubmitOut(
                 score=existing_score, total=existing.total_questions,
                 correct=existing.correct_answers,

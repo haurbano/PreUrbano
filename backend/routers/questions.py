@@ -17,6 +17,15 @@ SUBJECTS = {"matematicas", "ciencias_naturales", "lectura_critica", "sociales", 
 OPTIONS = {"A", "B", "C", "D"}
 
 
+async def _validate_image_upload(file: UploadFile) -> bytes:
+    if file.content_type not in ALLOWED_TYPES:
+        raise HTTPException(status_code=400, detail="Solo se aceptan imágenes JPG, PNG o WebP.")
+    data = await file.read()
+    if len(data) > MAX_SIZE:
+        raise HTTPException(status_code=400, detail="La imagen supera el límite de 20 MB.")
+    return data
+
+
 @router.post("/questions", response_model=QuestionOut)
 async def create_question(
     file: UploadFile = File(...),
@@ -25,9 +34,6 @@ async def create_question(
     db: Session = Depends(get_db),
     _: str = Depends(verify_token),
 ):
-    if file.content_type not in ALLOWED_TYPES:
-        raise HTTPException(status_code=400, detail="Solo se aceptan imágenes JPG, PNG o WebP.")
-
     if subject not in SUBJECTS:
         raise HTTPException(status_code=400, detail="Materia inválida.")
 
@@ -35,9 +41,7 @@ async def create_question(
     if correct_option not in OPTIONS:
         raise HTTPException(status_code=400, detail="La respuesta correcta debe ser A, B, C o D.")
 
-    data = await file.read()
-    if len(data) > MAX_SIZE:
-        raise HTTPException(status_code=400, detail="La imagen supera el límite de 20 MB.")
+    data = await _validate_image_upload(file)
 
     ext = file.filename.rsplit(".", 1)[-1].lower() if file.filename and "." in file.filename else "jpg"
     filename = f"{uuid.uuid4().hex}.{ext}"
@@ -223,12 +227,7 @@ async def replace_question_image(
     if not q:
         raise HTTPException(status_code=404, detail="Pregunta no encontrada.")
 
-    if file.content_type not in ALLOWED_TYPES:
-        raise HTTPException(status_code=400, detail="Solo se aceptan imágenes JPG, PNG o WebP.")
-
-    data = await file.read()
-    if len(data) > MAX_SIZE:
-        raise HTTPException(status_code=400, detail="La imagen supera el límite de 20 MB.")
+    data = await _validate_image_upload(file)
 
     ext = file.filename.rsplit(".", 1)[-1].lower() if file.filename and "." in file.filename else "jpg"
     new_filename = f"{uuid.uuid4().hex}.{ext}"

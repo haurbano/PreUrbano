@@ -21,6 +21,7 @@ from schemas import (
     StudentSimulationSummary,
 )
 from auth import create_token, verify_token, ADMIN_PASSWORD
+from utils.scoring import score_pct
 
 router = APIRouter()
 
@@ -243,14 +244,13 @@ def get_student_simulations(
     )
     items = []
     for r in results:
-        score_pct = round((r.correct_answers / r.total_questions) * 100) if r.total_questions else 0
         items.append(StudentSimulationSummary(
             id=r.id,
             created_at=r.created_at,
             total_questions=r.total_questions,
             correct_answers=r.correct_answers,
             incorrect_answers=r.total_questions - r.correct_answers,
-            score_pct=score_pct,
+            score_pct=score_pct(r.correct_answers, r.total_questions),
             breakdown=r.breakdown or {},
             timed_out=r.timed_out,
             duration_seconds=r.duration_seconds,
