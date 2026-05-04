@@ -105,7 +105,7 @@ Generado: 2026-05-04. Ver commits de F1 y F2 para el historial de cambios ya apl
 
 ---
 
-## F6 — Frontend: centralizar SUBJECT_LABELS/COLORS y URLs en `shared.js`
+## ~~F6 — Frontend: centralizar SUBJECT_LABELS/COLORS y URLs en `shared.js`~~ ✅ Completada 2026-05-04
 
 **Objetivo:** Una sola fuente de verdad para constantes del frontend.
 
