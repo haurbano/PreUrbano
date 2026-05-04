@@ -32,6 +32,7 @@ async function reportImageError(questionId, imagePath, attempts) {
 
 let currentUser = null;
 let _sim = null;
+let _simStartedAt = null;
 let _timerInterval = null;
 let _timerSecondsLeft = 0;
 let _curado = null;
@@ -361,6 +362,7 @@ async function startSim() {
     _sim.answers = [];
     _sim.answered = [];
     _sim.started = true;
+    _simStartedAt = Date.now();
     if (_sim.timeLimitMinutes > 0) {
       _timerSecondsLeft = _sim.timeLimitMinutes * 60;
       startTimer();
@@ -451,7 +453,12 @@ async function submitSim(timedOut = false) {
     const res = await fetch('/api/simulation/submit', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ simulation_id: _sim.simulationId, answers, timed_out: timedOut }),
+      body: JSON.stringify({
+        simulation_id: _sim.simulationId,
+        answers,
+        timed_out: timedOut,
+        duration_seconds: _simStartedAt ? Math.floor((Date.now() - _simStartedAt) / 1000) : null,
+      }),
     });
     if (res.status === 401) { logout(); return; }
     renderSimResult(await res.json());

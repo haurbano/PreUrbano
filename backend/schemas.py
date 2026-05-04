@@ -166,6 +166,7 @@ class SimulationSubmitIn(BaseModel):
     simulation_id: str
     answers: list[dict]
     timed_out: bool = False
+    duration_seconds: int | None = None
 
 
 class SimulationSubmitOut(BaseModel):
@@ -191,6 +192,7 @@ class StudentSimulationSummary(BaseModel):
     score_pct: int
     breakdown: dict
     timed_out: bool
+    duration_seconds: int | None = None
 
 
 class StudentSimulationsOut(BaseModel):

@@ -1,5 +1,11 @@
 import { token, logout, showToast } from './shared.js';
 
+function fmtDuration(s) {
+  if (s == null) return '—';
+  const m = Math.floor(s / 60), sec = s % 60;
+  return `${m}:${String(sec).padStart(2, '0')}`;
+}
+
 let currentModalUser = null;
 
 export async function loadUsers() {
@@ -113,6 +119,7 @@ window.openStudentSimulations = async function(userId, userName) {
         <td><span class="student-score ${scoreClass}" style="font-weight:700">${sim.score_pct}%</span></td>
         <td>${sim.correct_answers}/${sim.total_questions}</td>
         <td>${sim.timed_out ? '<span style="color:var(--red);font-size:0.78rem">⏱ Tiempo</span>' : '—'}</td>
+        <td style="color:var(--muted);white-space:nowrap">${fmtDuration(sim.duration_seconds)}</td>
         <td><div class="sim-breakdown-cell">${bdChips}</div></td>
       </tr>`;
     }).join('');
@@ -120,7 +127,7 @@ window.openStudentSimulations = async function(userId, userName) {
     document.getElementById('sim-list-title').textContent = `Simulacros de ${userName}`;
     document.getElementById('sim-list-body').innerHTML = `
       <table class="sim-summary-table">
-        <thead><tr><th>Fecha</th><th>Score</th><th>Correctas</th><th>Estado</th><th>Por materia</th></tr></thead>
+        <thead><tr><th>Fecha</th><th>Score</th><th>Correctas</th><th>Estado</th><th>Duración</th><th>Por materia</th></tr></thead>
         <tbody>${rows}</tbody>
       </table>`;
     document.getElementById('sim-list-modal').classList.remove('hidden');

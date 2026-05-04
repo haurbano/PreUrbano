@@ -84,6 +84,7 @@ class SimulationResult(Base):
     correct_answers: Mapped[int]
     breakdown: Mapped[dict] = mapped_column(JSON, default=dict)
     timed_out: Mapped[bool] = mapped_column(Boolean, default=False)
+    duration_seconds: Mapped[int | None] = mapped_column(Integer, nullable=True, default=None)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
     )

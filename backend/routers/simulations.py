@@ -159,6 +159,7 @@ def submit_simulation(
         correct_answers=correct,
         breakdown=breakdown,
         timed_out=body.timed_out,
+        duration_seconds=body.duration_seconds,
     )
     db.add(result)
     db.commit()

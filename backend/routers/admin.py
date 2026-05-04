@@ -226,5 +226,6 @@ def get_student_simulations(
             score_pct=score_pct,
             breakdown=r.breakdown or {},
             timed_out=r.timed_out,
+            duration_seconds=r.duration_seconds,
         ))
     return StudentSimulationsOut(items=items, total=len(items))
