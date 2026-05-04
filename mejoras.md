@@ -69,7 +69,7 @@ Generado: 2026-05-04. Ver commits de F1 y F2 para el historial de cambios ya apl
 
 ---
 
-## F4 — DI con `Depends(get_db)` en `routers/auth.py`
+## ~~F4 — DI con `Depends(get_db)` en `routers/auth.py`~~ ✅ Completada 2026-05-04
 
 **Objetivo:** Evitar fugas de conexiones y usar el patrón estándar del proyecto.
 
@@ -87,7 +87,7 @@ Generado: 2026-05-04. Ver commits de F1 y F2 para el historial de cambios ya apl
 
 ---
 
-## F5 — `EmailStr` y deduplicación de schemas
+## ~~F5 — `EmailStr` y deduplicación de schemas~~ ✅ Completada 2026-05-04
 
 **Objetivo:** Usar validación estándar de Pydantic y eliminar schemas casi idénticos.
 
@@ -145,7 +145,7 @@ Generado: 2026-05-04. Ver commits de F1 y F2 para el historial de cambios ya apl
 
 ---
 
-## F7 — nginx: `Cache-Control immutable` en `/static/`
+## ~~F7 — nginx: `Cache-Control immutable` en `/static/`~~ ✅ Completada 2026-05-04
 
 **Objetivo:** Aprovechar el `?v=N` existente para cachear agresivamente los assets estáticos.
 
@@ -165,7 +165,7 @@ Generado: 2026-05-04. Ver commits de F1 y F2 para el historial de cambios ya apl
 
 ---
 
-## F8 — `backend/.dockerignore`
+## ~~F8 — `backend/.dockerignore`~~ ✅ Completada 2026-05-04
 
 **Objetivo:** Evitar que el build de Docker copie archivos innecesarios.
 
@@ -191,7 +191,7 @@ venv/
 
 ---
 
-## F9 (opcional) — Migrar `student.js` a `type="module"`
+## ~~F9 (opcional) — Migrar `student.js` a `type="module"`~~ ✅ Completada 2026-05-04
 
 **Objetivo:** Consistencia con el frontend de admin que ya usa ES modules.
 
