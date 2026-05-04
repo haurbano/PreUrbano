@@ -308,6 +308,10 @@ function renderSimConfig(availableSubjects = SUBJECTS) {
           <option value="20" selected>20</option>
           <option value="25">25</option>
           <option value="30">30</option>
+          <option value="35">35</option>
+          <option value="40">40</option>
+          <option value="45">45</option>
+          <option value="50">50</option>
         </select>
       </div>
       <button class="sim-start-btn" onclick="startSim()">Iniciar práctica</button>
