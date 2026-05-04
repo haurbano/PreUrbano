@@ -35,7 +35,7 @@ Generado: 2026-05-04. Ver commits de F1 y F2 para el historial de cambios ya apl
 
 ---
 
-## F3 — Helpers backend: scoring, fetch-simulacro, validación de archivos
+## ~~F3 — Helpers backend: scoring, fetch-simulacro, validación de archivos~~ ✅ Completada 2026-05-04
 
 **Objetivo:** Eliminar código duplicado en routers.
 
