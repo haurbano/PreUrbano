@@ -3,6 +3,17 @@ from sqlalchemy import Boolean, String, DateTime, Integer, ForeignKey, JSON, Uni
 from sqlalchemy.orm import Mapped, mapped_column
 from database import Base
 
+DEFAULT_CONFIG = {
+    "questions_per_simulation": 20,
+    "subject_limits": {
+        "matematicas": 4,
+        "ciencias_naturales": 4,
+        "lectura_critica": 4,
+        "sociales": 4,
+        "ingles": 4,
+    },
+}
+
 
 class Subscriber(Base):
     __tablename__ = "subscribers"

@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from database import get_db
-from models import Subscriber, User, SimulationConfig, SimulationResult
+from models import Subscriber, User, SimulationConfig, SimulationResult, DEFAULT_CONFIG
 from schemas import (
     LoginRequest,
     TokenResponse,
@@ -91,14 +91,8 @@ def get_simulation_config(
     if not config:
         config = SimulationConfig(
             id=1,
-            questions_per_simulation=20,
-            subject_limits={
-                "matematicas": 4,
-                "ciencias_naturales": 4,
-                "lectura_critica": 4,
-                "sociales": 4,
-                "ingles": 4,
-            },
+            questions_per_simulation=DEFAULT_CONFIG["questions_per_simulation"],
+            subject_limits=DEFAULT_CONFIG["subject_limits"],
             time_limit_minutes=0,
         )
         db.add(config)

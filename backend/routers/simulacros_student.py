@@ -8,10 +8,11 @@ from schemas import (
     QuestionForSim,
 )
 from auth import verify_user_token_cookie
+from utils.session_store import TTLDict
 
 router = APIRouter()
 
-_active_sim_sessions: dict[str, dict] = {}
+_active_sim_sessions: TTLDict = TTLDict()
 
 
 @router.get("/simulacro/active", response_model=SimulacroAvailable)
@@ -101,14 +102,14 @@ def start_simulacro(
     questions.sort(key=lambda q: seen[q.subject])
 
     session_id = str(uuid.uuid4())
-    _active_sim_sessions[session_id] = {
+    _active_sim_sessions.set(session_id, {
         "simulacro_id": sim.id,
         "user_id": user_id,
         "questions": [
             {"id": q.id, "subject": q.subject, "correct_option": q.correct_option}
             for q in questions
         ],
-    }
+    })
 
     return SimulacroStartOut(
         simulacro_id=sim.id,

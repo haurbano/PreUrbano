@@ -3,7 +3,7 @@ import random
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from database import get_db
-from models import Question, SimulationConfig, SimulationResult
+from models import Question, SimulationConfig, SimulationResult, DEFAULT_CONFIG
 from schemas import (
     SimulationStartOut,
     SimulationSubmitIn,
@@ -13,23 +13,13 @@ from schemas import (
     SimulationStartIn,
 )
 from auth import verify_user_token_cookie
+from utils.session_store import TTLDict
 
 router = APIRouter()
 
-_active_simulations: dict[str, list[dict]] = {}
+_active_simulations: TTLDict = TTLDict()
 
 SUBJECTS = ["matematicas", "ciencias_naturales", "lectura_critica", "sociales", "ingles"]
-
-DEFAULT_CONFIG = {
-    "questions_per_simulation": 20,
-    "subject_limits": {
-        "matematicas": 4,
-        "ciencias_naturales": 4,
-        "lectura_critica": 4,
-        "sociales": 4,
-        "ingles": 4,
-    },
-}
 
 
 @router.get("/simulation/subjects")
@@ -108,10 +98,10 @@ def start_simulation(
     ]
 
     sim_id = str(uuid.uuid4())
-    _active_simulations[sim_id] = [
+    _active_simulations.set(sim_id, [
         {"id": q.id, "subject": q.subject, "correct_option": q.correct_option}
         for q in all_questions
-    ]
+    ])
 
     return SimulationStartOut(
         simulation_id=sim_id,
