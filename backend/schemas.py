@@ -199,6 +199,18 @@ class SubjectBreakdown(BaseModel):
     total: int
 
 
+class SimulationSummary(BaseModel):
+    id: int
+    created_at: datetime
+    total_questions: int
+    correct_answers: int
+    incorrect_answers: int
+    score_pct: int
+    breakdown: dict
+    timed_out: bool = False
+    duration_seconds: int | None = None
+
+
 class StudentSimulationsOut(BaseModel):
     items: list[SimulationSummary]
     total: int
@@ -229,18 +241,6 @@ class SimulationHistoryOut(BaseModel):
     page: int
     page_size: int
     pages: int
-
-
-class SimulationSummary(BaseModel):
-    id: int
-    created_at: datetime
-    total_questions: int
-    correct_answers: int
-    incorrect_answers: int
-    score_pct: int
-    breakdown: dict
-    timed_out: bool = False
-    duration_seconds: int | None = None
 
 
 class StudentProgressOut(BaseModel):
