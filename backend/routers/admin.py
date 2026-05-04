@@ -16,9 +16,9 @@ from schemas import (
     SimulationConfigUpdate,
     SimulationHistoryOut,
     SimulationResultOut,
+    SimulationSummary,
     StudentsListOut,
     StudentSimulationsOut,
-    StudentSimulationSummary,
 )
 from auth import create_token, verify_token, ADMIN_PASSWORD
 from utils.scoring import score_pct
@@ -83,7 +83,7 @@ def update_user(
     db: Session = Depends(get_db),
     _: str = Depends(verify_token),
 ):
-    user = db.query(User).filter(User.id == user_id).first()
+    user = db.query(User).filter(User.id == user_id, User.is_deleted == False).first()
     if not user:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
     user.is_active = body.is_active
@@ -244,7 +244,7 @@ def get_student_simulations(
     )
     items = []
     for r in results:
-        items.append(StudentSimulationSummary(
+        items.append(SimulationSummary(
             id=r.id,
             created_at=r.created_at,
             total_questions=r.total_questions,

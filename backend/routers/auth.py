@@ -1,8 +1,9 @@
 import os
-from fastapi import APIRouter, Request, Depends
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import RedirectResponse
+from sqlalchemy.orm import Session
 from authlib.integrations.httpx_client import AsyncOAuth2Client
-from database import SessionLocal
+from database import SessionLocal, get_db
 from models import User
 from auth import create_user_token, verify_user_token_cookie
 from schemas import UserOut, UserProfileUpdate
@@ -53,6 +54,8 @@ async def google_callback(request: Request, code: str, state: str):
     name = info.get("name", email.split("@")[0])
     picture = info.get("picture")
 
+    # google_callback cannot use Depends(get_db) — it's not a protected route
+    # and needs manual session management for the OAuth flow.
     db = SessionLocal()
     try:
         user = db.query(User).filter(User.google_id == google_id).first()
@@ -91,33 +94,33 @@ async def logout():
 
 
 @router.get("/me", response_model=UserOut)
-async def me(token_data: dict = Depends(verify_user_token_cookie)):
-    from fastapi import HTTPException
-    db = SessionLocal()
-    try:
-        user = db.query(User).filter(User.id == int(token_data["sub"])).first()
-        if not user or user.is_deleted:
-            raise HTTPException(status_code=401, detail="No autenticado")
-        return user
-    finally:
-        db.close()
+async def me(
+    token_data: dict = Depends(verify_user_token_cookie),
+    db: Session = Depends(get_db),
+):
+    user = db.query(User).filter(User.id == int(token_data["sub"])).first()
+    if not user or user.is_deleted:
+        raise HTTPException(status_code=401, detail="No autenticado")
+    return user
 
 
 @router.put("/profile", response_model=UserOut)
-async def update_profile(body: UserProfileUpdate, token_data: dict = Depends(verify_user_token_cookie)):
-    from fastapi import HTTPException
-    db = SessionLocal()
-    try:
-        user = db.query(User).filter(User.id == int(token_data["sub"])).first()
-        if not user:
-            raise HTTPException(status_code=401, detail="No autenticado")
-        user.name = body.name.strip()
-        user.document_id = body.document_id.strip() if body.document_id else None
-        user.phone = body.phone.strip() if body.phone else None
-        user.grade = body.grade.strip() if body.grade else None
-        user.institution = body.institution.strip() if body.institution else None
-        db.commit()
-        db.refresh(user)
-        return user
-    finally:
-        db.close()
+async def update_profile(
+    body: UserProfileUpdate,
+    token_data: dict = Depends(verify_user_token_cookie),
+    db: Session = Depends(get_db),
+):
+    user = db.query(User).filter(
+        User.id == int(token_data["sub"]),
+        User.is_deleted == False,
+    ).first()
+    if not user:
+        raise HTTPException(status_code=401, detail="No autenticado")
+    user.name = body.name.strip()
+    user.document_id = body.document_id.strip() if body.document_id else None
+    user.phone = body.phone.strip() if body.phone else None
+    user.grade = body.grade.strip() if body.grade else None
+    user.institution = body.institution.strip() if body.institution else None
+    db.commit()
+    db.refresh(user)
+    return user

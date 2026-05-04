@@ -3,16 +3,13 @@ from pydantic import BaseModel, EmailStr, Field, field_validator
 
 
 class SubscribeRequest(BaseModel):
-    email: str
+    email: EmailStr
     source: str = "hero"
 
-    @field_validator("email")
+    @field_validator("email", mode="before")
     @classmethod
-    def validate_email(cls, v: str) -> str:
-        v = v.strip().lower()
-        if "@" not in v or "." not in v.split("@")[-1]:
-            raise ValueError("Email inválido")
-        return v
+    def normalize_email(cls, v: str) -> str:
+        return v.strip().lower()
 
     @field_validator("source")
     @classmethod
@@ -202,20 +199,8 @@ class SubjectBreakdown(BaseModel):
     total: int
 
 
-class StudentSimulationSummary(BaseModel):
-    id: int
-    created_at: datetime
-    total_questions: int
-    correct_answers: int
-    incorrect_answers: int
-    score_pct: int
-    breakdown: dict
-    timed_out: bool
-    duration_seconds: int | None = None
-
-
 class StudentSimulationsOut(BaseModel):
-    items: list[StudentSimulationSummary]
+    items: list[SimulationSummary]
     total: int
 
 
@@ -254,6 +239,8 @@ class SimulationSummary(BaseModel):
     incorrect_answers: int
     score_pct: int
     breakdown: dict
+    timed_out: bool = False
+    duration_seconds: int | None = None
 
 
 class StudentProgressOut(BaseModel):
