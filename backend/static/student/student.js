@@ -461,6 +461,7 @@ async function submitSim(timedOut = false) {
       }),
     });
     if (res.status === 401) { logout(); return; }
+    if (!res.ok) { c.textContent = 'Tu sesión expiró. Por favor inicia una nueva práctica.'; return; }
     renderSimResult(await res.json());
   } catch {
     c.innerHTML = '<div class="sim-empty">Error al enviar. Intenta de nuevo.</div>';
@@ -718,6 +719,7 @@ async function submitCurado(timedOut = false) {
       }),
     });
     if (res.status === 401) { logout(); return; }
+    if (!res.ok) { c.textContent = 'Tu sesión expiró. Por favor inicia un nuevo simulacro.'; return; }
     _curado = null;
     renderCuradoResult(await res.json());
   } catch {

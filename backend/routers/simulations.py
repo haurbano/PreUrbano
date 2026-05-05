@@ -1,6 +1,6 @@
 import uuid
 import random
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from database import get_db
 from analytics.database import get_db as analytics_get_db
@@ -125,7 +125,7 @@ def submit_simulation(
     sim_id = body.simulation_id
     questions_data = _active_simulations.pop(sim_id, None)
     if not questions_data:
-        return SimulationSubmitOut(score=0, total=0, correct=0, incorrect=0, breakdown={})
+        raise HTTPException(status_code=410, detail="La sesión expiró. Por favor inicia una nueva práctica.")
 
     answers_map = {a["question_id"]: a["selected_option"] for a in body.answers}
     correct, breakdown = compute_breakdown(questions_data, answers_map)
