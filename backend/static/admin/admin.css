@@ -355,3 +355,18 @@ tbody tr.clickable { cursor: pointer; }
   min-width: 20px; text-align: right; flex-shrink: 0;
 }
 .sim-editor-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+
+/* Utility color classes */
+.text-red   { color: #f87171; font-weight: 700; }
+.text-amber { color: #fbbf24; font-weight: 700; }
+.text-green { color: #34d399; font-weight: 700; }
+.text-gray  { color: var(--muted); }
+
+/* Analytics view */
+.analytics-block { margin-bottom: 32px; }
+.analytics-block h3 {
+  font-size: 0.82rem; font-weight: 600; color: var(--muted);
+  text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 14px;
+}
+.analytics-block label { font-size: 0.85rem; color: var(--muted); display: inline-flex; align-items: center; gap: 8px; margin-bottom: 14px; }
+.analytics-block select { background: var(--surface); border: 1px solid var(--border); color: var(--text); border-radius: 8px; padding: 6px 10px; font-family: 'Inter', sans-serif; font-size: 0.85rem; cursor: pointer; }

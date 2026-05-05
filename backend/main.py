@@ -14,6 +14,7 @@ from routers import simulations as sim_router
 from routers import simulacros_admin as simulacros_admin_router
 from routers import simulacros_student as simulacros_student_router
 from routers import logs as logs_router
+from routers import analytics as analytics_router
 import analytics.models  # noqa: F401 — registers models with analytics Base
 from analytics.database import engine as analytics_engine, Base as AnalyticsBase
 
@@ -56,6 +57,7 @@ app.include_router(sim_router.router, prefix="/api")
 app.include_router(simulacros_admin_router.router, prefix="/admin")
 app.include_router(simulacros_student_router.router, prefix="/api")
 app.include_router(logs_router.router, prefix="/api")
+app.include_router(analytics_router.router, prefix="/admin")
 
 # Serve uploaded files (images extracted from PDFs)
 _uploads_path = Path("/app/uploads")

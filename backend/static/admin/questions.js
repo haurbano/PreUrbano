@@ -1,4 +1,4 @@
-import { token, logout, showToast, subjectLabel, uploadUrl } from './shared.js?v=4';
+import { token, logout, showToast, subjectLabel, uploadUrl } from './shared.js?v=5';
 
 let _sort = null; // null | 'difficulty_asc' | 'difficulty_desc'
 

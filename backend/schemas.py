@@ -86,6 +86,14 @@ class QuestionWithStats(QuestionOut):
     accuracy_pct: int | None = None
 
 
+class SubjectDifficultyOut(BaseModel):
+    subject: str
+    attempts: int
+    correct: int
+    accuracy_pct: int | None
+    question_count: int
+
+
 class QuestionUpdate(BaseModel):
     subject: str | None = None
     correct_option: str | None = None

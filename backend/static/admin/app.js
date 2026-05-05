@@ -1,4 +1,4 @@
-import { TOKEN_KEY, token, logout, showToast } from './shared.js?v=4';
+import { TOKEN_KEY, token, logout, showToast } from './shared.js?v=5';
 import { loadSubscribers } from './subscribers.js?v=5';
 import { loadUsers, openUserModal, toggleUser, closeModal, deleteUser } from './users.js?v=7';
 import {
@@ -8,8 +8,9 @@ import {
   handleGroupSelectChange, saveGroupAssignment,
   setReplaceFile, handleReplaceDragOver, handleReplaceDragLeave, handleReplaceDrop,
   replaceQuestionImage, toggleDifficultySort,
-} from './questions.js?v=7';
+} from './questions.js?v=8';
 import { loadSimConfig, saveSimConfig } from './simconfig.js?v=3';
+import { initAnalytics } from './analytics.js?v=1';
 import {
   loadSimulacros, openSimulacroEditor, saveSimulacro,
   activateSimulacro, deactivateSimulacro, deleteSimulacro,
@@ -53,6 +54,7 @@ export function switchView(view) {
   if (view === 'banco')       loadQuestions();
   if (view === 'simconfig')   loadSimConfig();
   if (view === 'simulacros')  loadSimulacros();
+  if (view === 'analytics')   initAnalytics();
 }
 
 export function backToQuestions() {
@@ -64,6 +66,11 @@ document.getElementById('file-input').addEventListener('change', e => setFile(e.
 ['new-subject', 'new-correct'].forEach(id =>
   document.getElementById(id).addEventListener('change', updateSaveBtn)
 );
+
+function viewQuestionFromAnalytics(id) {
+  document.getElementById('filter-id').value = id;
+  switchView('banco');
+}
 
 // Expose all functions that inline onclick= handlers call
 Object.assign(window, {
@@ -110,6 +117,7 @@ Object.assign(window, {
   simChangeBancoSubject,
   simBancoPrevPage,
   simBancoNextPage,
+  viewQuestionFromAnalytics,
 });
 
 if (token()) showDashboard();

@@ -38,6 +38,13 @@ export function subjectLabel(s) {
   return SUBJECT_LABELS[s] || s;
 }
 
+export function accuracyColorClass(pct) {
+  if (pct === null || pct === undefined) return 'text-gray';
+  if (pct < 40) return 'text-red';
+  if (pct < 70) return 'text-amber';
+  return 'text-green';
+}
+
 let _toastTimer = null;
 export function showToast(msg) {
   const t = document.getElementById('toast');
