@@ -1,5 +1,13 @@
 import { token, logout, showToast, subjectLabel, uploadUrl } from './shared.js?v=4';
 
+function difficultyCell(q) {
+  if (!q.attempts) return '<td style="color:var(--muted);font-size:0.8rem;text-align:center">—</td>';
+  const pct = q.accuracy_pct;
+  const color = pct >= 70 ? '#34d399' : pct >= 40 ? '#fbbf24' : '#f87171';
+  return `<td><span style="color:${color};font-weight:700">${pct}%</span>` +
+         `<span style="color:var(--muted);font-size:0.75rem;margin-left:4px">(${q.attempts})</span></td>`;
+}
+
 export let selectedFile = null;
 let _replaceFile = null;
 let _currentPage = 1;
@@ -85,8 +93,10 @@ export async function loadQuestions(page) {
   if (!wrap) return;
   wrap.innerHTML = '<p style="color:var(--muted);padding:16px">Cargando…</p>';
   const subject = document.getElementById('filter-subject')?.value || '';
+  const filterId = document.getElementById('filter-id')?.value || '';
   const params = new URLSearchParams({ page: _currentPage });
   if (subject) params.set('subject', subject);
+  if (filterId) params.set('id', filterId);
   try {
     const res = await fetch('/questions?' + params, { headers: { Authorization: `Bearer ${token()}` } });
     if (res.status === 401) { logout(); return; }
@@ -104,6 +114,7 @@ export async function loadQuestions(page) {
           ${q.group_id ? '<span title="Parte de un conjunto" style="margin-left:4px">📎</span>' : ''}
         </td>
         <td><span class="badge badge-option">${q.correct_option}</span></td>
+        ${difficultyCell(q)}
         <td style="color:var(--muted)">${new Date(q.created_at).toLocaleDateString('es-CO')}</td>
         <td onclick="event.stopPropagation()">
           <button class="action-btn del" onclick="deleteQuestion(${q.id})">🗑</button>
@@ -114,7 +125,7 @@ export async function loadQuestions(page) {
 
     wrap.innerHTML = `
       <table>
-        <thead><tr><th></th><th>Materia</th><th>Respuesta</th><th>Fecha</th><th>Acciones</th></tr></thead>
+        <thead><tr><th></th><th>Materia</th><th>Respuesta</th><th>Dificultad</th><th>Fecha</th><th>Acciones</th></tr></thead>
         <tbody>${rows}</tbody>
       </table>
       ${paginationHtml}`;

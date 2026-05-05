@@ -8,7 +8,7 @@ import {
   handleGroupSelectChange, saveGroupAssignment,
   setReplaceFile, handleReplaceDragOver, handleReplaceDragLeave, handleReplaceDrop,
   replaceQuestionImage,
-} from './questions.js?v=5';
+} from './questions.js?v=6';
 import { loadSimConfig, saveSimConfig } from './simconfig.js?v=3';
 import {
   loadSimulacros, openSimulacroEditor, saveSimulacro,

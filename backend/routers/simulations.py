@@ -3,6 +3,8 @@ import random
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from database import get_db
+from analytics.database import get_db as analytics_get_db
+from analytics.recorder import record_attempts
 from models import Question, SimulationConfig, SimulationResult, DEFAULT_CONFIG
 from schemas import (
     SimulationStartOut,
@@ -118,6 +120,7 @@ def submit_simulation(
     body: SimulationSubmitIn,
     token_data: dict = Depends(verify_user_token_cookie),
     db: Session = Depends(get_db),
+    analytics_db: Session = Depends(analytics_get_db),
 ):
     sim_id = body.simulation_id
     questions_data = _active_simulations.pop(sim_id, None)
@@ -129,6 +132,12 @@ def submit_simulation(
     total = len(questions_data)
     incorrect = total - correct
     score = score_pct(correct, total)
+
+    question_results = [
+        (q["id"], answers_map.get(q["id"]) == q["correct_option"])
+        for q in questions_data
+    ]
+    record_attempts(analytics_db, question_results)
 
     user_id = int(token_data["sub"])
     result = SimulationResult(

@@ -4,8 +4,10 @@ from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, Q
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from database import get_db
+from analytics.database import get_db as analytics_get_db
+from analytics.models import QuestionStats
 from models import Question, QuestionGroup, SimulationConfig
-from schemas import QuestionOut, QuestionUpdate, QuestionGroupCreate, QuestionGroupOut, QuestionGroupDetail
+from schemas import QuestionOut, QuestionUpdate, QuestionGroupCreate, QuestionGroupOut, QuestionGroupDetail, QuestionWithStats
 from auth import verify_token
 
 router = APIRouter()
@@ -60,7 +62,7 @@ PAGE_SIZE = 20
 
 
 class QuestionsPage(BaseModel):
-    items: list[QuestionOut]
+    items: list[QuestionWithStats]
     total: int
     page: int
     page_size: int
@@ -72,17 +74,51 @@ class QuestionsPage(BaseModel):
 @router.get("/questions", response_model=QuestionsPage)
 def list_questions(
     subject: str | None = Query(None),
+    id: int | None = Query(None),
     page: int = Query(1, ge=1),
     db: Session = Depends(get_db),
+    analytics_db: Session = Depends(analytics_get_db),
     _: str = Depends(verify_token),
 ):
-    q = db.query(Question)
-    if subject:
-        q = q.filter(Question.subject == subject)
-    total = q.count()
-    pages = max(1, -(-total // PAGE_SIZE))  # ceiling division
-    items = q.order_by(Question.created_at.desc()).offset((page - 1) * PAGE_SIZE).limit(PAGE_SIZE).all()
-    return QuestionsPage(items=items, total=total, page=page, page_size=PAGE_SIZE, pages=pages)
+    query = db.query(Question)
+    if id is not None:
+        query = query.filter(Question.id == id)
+        items = query.all()
+        total = len(items)
+        pages = 1
+    else:
+        if subject:
+            query = query.filter(Question.subject == subject)
+        total = query.count()
+        pages = max(1, -(-total // PAGE_SIZE))
+        items = query.order_by(Question.created_at.desc()).offset((page - 1) * PAGE_SIZE).limit(PAGE_SIZE).all()
+
+    stats_map: dict[int, QuestionStats] = {}
+    if items:
+        stats_rows = analytics_db.query(QuestionStats).filter(
+            QuestionStats.question_id.in_([q.id for q in items])
+        ).all()
+        stats_map = {s.question_id: s for s in stats_rows}
+
+    result_items = []
+    for q in items:
+        s = stats_map.get(q.id)
+        attempts = s.total_attempts if s else 0
+        correct_count = s.correct_attempts if s else 0
+        accuracy_pct = round((correct_count / attempts) * 100) if attempts else None
+        result_items.append(QuestionWithStats(
+            id=q.id,
+            subject=q.subject,
+            correct_option=q.correct_option,
+            image_path=q.image_path,
+            group_id=q.group_id,
+            created_at=q.created_at,
+            attempts=attempts,
+            correct_count=correct_count,
+            accuracy_pct=accuracy_pct,
+        ))
+
+    return QuestionsPage(items=result_items, total=total, page=page, page_size=PAGE_SIZE, pages=pages)
 
 
 @router.patch("/questions/{question_id}", response_model=QuestionOut)

@@ -2,6 +2,8 @@ import uuid
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from database import get_db
+from analytics.database import get_db as analytics_get_db
+from analytics.recorder import record_attempts
 from models import Simulacro, SimulacroQuestion, SimulacroResult, Question
 from schemas import (
     SimulacroAvailable, SimulacroStartOut, SimulacroSubmitIn, SimulacroSubmitOut,
@@ -126,6 +128,7 @@ def submit_simulacro(
     body: SimulacroSubmitIn,
     token_data: dict = Depends(verify_user_token_cookie),
     db: Session = Depends(get_db),
+    analytics_db: Session = Depends(analytics_get_db),
 ):
     user_id = int(token_data["sub"])
     session = _active_sim_sessions.pop(body.session_id, None)
@@ -136,6 +139,12 @@ def submit_simulacro(
     correct, breakdown = compute_breakdown(session["questions"], answers_map)
     total = len(session["questions"])
     score = score_pct(correct, total)
+
+    question_results = [
+        (q["id"], answers_map.get(q["id"]) == q["correct_option"])
+        for q in session["questions"]
+    ]
+    record_attempts(analytics_db, question_results)
 
     try:
         result = SimulacroResult(

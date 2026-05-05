@@ -80,6 +80,12 @@ class QuestionOut(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class QuestionWithStats(QuestionOut):
+    attempts: int = 0
+    correct_count: int = 0
+    accuracy_pct: int | None = None
+
+
 class QuestionUpdate(BaseModel):
     subject: str | None = None
     correct_option: str | None = None
