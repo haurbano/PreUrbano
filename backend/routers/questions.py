@@ -2,10 +2,9 @@ import uuid
 from pathlib import Path
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, Query
 from pydantic import BaseModel
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 from database import get_db
-from analytics.database import get_db as analytics_get_db
-from analytics.models import QuestionStats
 from models import Question, QuestionGroup, SimulationConfig
 from schemas import QuestionOut, QuestionUpdate, QuestionGroupCreate, QuestionGroupOut, QuestionGroupDetail, QuestionWithStats
 from auth import verify_token
@@ -71,53 +70,69 @@ class QuestionsPage(BaseModel):
     model_config = {"from_attributes": True}
 
 
+_ORDER_CLAUSES: dict[str | None, str] = {
+    "difficulty_asc":  "accuracy_pct ASC NULLS LAST, q.id DESC",
+    "difficulty_desc": "accuracy_pct DESC NULLS LAST, q.id DESC",
+    None:              "q.created_at DESC",
+}
+
+_STATS_SELECT = """
+    SELECT q.id, q.subject, q.correct_option, q.image_path,
+           q.group_id, q.created_at,
+           COALESCE(s.total_attempts, 0)   AS attempts,
+           COALESCE(s.correct_attempts, 0) AS correct_count,
+           CASE WHEN s.total_attempts > 0
+                THEN CAST(ROUND(100.0 * s.correct_attempts / s.total_attempts) AS INTEGER)
+                END AS accuracy_pct
+    FROM questions q
+    LEFT JOIN analytics.question_stats s ON s.question_id = q.id
+"""
+
+
 @router.get("/questions", response_model=QuestionsPage)
 def list_questions(
     subject: str | None = Query(None),
     id: int | None = Query(None),
+    sort: str | None = Query(None, pattern="^(difficulty_asc|difficulty_desc)$"),
     page: int = Query(1, ge=1),
     db: Session = Depends(get_db),
-    analytics_db: Session = Depends(analytics_get_db),
     _: str = Depends(verify_token),
 ):
-    query = db.query(Question)
     if id is not None:
-        query = query.filter(Question.id == id)
-        items = query.all()
-        total = len(items)
-        pages = 1
-    else:
-        if subject:
-            query = query.filter(Question.subject == subject)
-        total = query.count()
+        where, params = "q.id = :id", {"id": id}
+        offset, pages = 0, 1
+        total = db.execute(text(f"SELECT COUNT(*) FROM questions q WHERE {where}"), params).scalar()
+    elif subject:
+        where, params = "q.subject = :subject", {"subject": subject}
+        total = db.execute(text(f"SELECT COUNT(*) FROM questions q WHERE {where}"), params).scalar()
         pages = max(1, -(-total // PAGE_SIZE))
-        items = query.order_by(Question.created_at.desc()).offset((page - 1) * PAGE_SIZE).limit(PAGE_SIZE).all()
+        offset = (page - 1) * PAGE_SIZE
+    else:
+        where, params = "1=1", {}
+        total = db.execute(text(f"SELECT COUNT(*) FROM questions q WHERE {where}"), params).scalar()
+        pages = max(1, -(-total // PAGE_SIZE))
+        offset = (page - 1) * PAGE_SIZE
 
-    stats_map: dict[int, QuestionStats] = {}
-    if items:
-        stats_rows = analytics_db.query(QuestionStats).filter(
-            QuestionStats.question_id.in_([q.id for q in items])
-        ).all()
-        stats_map = {s.question_id: s for s in stats_rows}
+    order = _ORDER_CLAUSES.get(sort, _ORDER_CLAUSES[None])
+    rows = db.execute(
+        text(f"{_STATS_SELECT} WHERE {where} ORDER BY {order} LIMIT :limit OFFSET :offset"),
+        {**params, "limit": PAGE_SIZE, "offset": offset},
+    ).mappings().all()
 
-    result_items = []
-    for q in items:
-        s = stats_map.get(q.id)
-        attempts = s.total_attempts if s else 0
-        correct_count = s.correct_attempts if s else 0
-        accuracy_pct = round((correct_count / attempts) * 100) if attempts else None
-        result_items.append(QuestionWithStats(
-            id=q.id,
-            subject=q.subject,
-            correct_option=q.correct_option,
-            image_path=q.image_path,
-            group_id=q.group_id,
-            created_at=q.created_at,
-            attempts=attempts,
-            correct_count=correct_count,
-            accuracy_pct=accuracy_pct,
-        ))
-
+    result_items = [
+        QuestionWithStats(
+            id=r["id"],
+            subject=r["subject"],
+            correct_option=r["correct_option"],
+            image_path=r["image_path"],
+            group_id=r["group_id"],
+            created_at=r["created_at"],
+            attempts=r["attempts"],
+            correct_count=r["correct_count"],
+            accuracy_pct=r["accuracy_pct"],
+        )
+        for r in rows
+    ]
     return QuestionsPage(items=result_items, total=total, page=page, page_size=PAGE_SIZE, pages=pages)
 
 

@@ -1,5 +1,24 @@
 import { token, logout, showToast, subjectLabel, uploadUrl } from './shared.js?v=4';
 
+let _sort = null; // null | 'difficulty_asc' | 'difficulty_desc'
+
+function _nextSort(curr) {
+  if (curr === null) return 'difficulty_asc';
+  if (curr === 'difficulty_asc') return 'difficulty_desc';
+  return null;
+}
+
+function _sortIndicator() {
+  if (_sort === 'difficulty_asc')  return ' ▲';
+  if (_sort === 'difficulty_desc') return ' ▼';
+  return '';
+}
+
+export function toggleDifficultySort() {
+  _sort = _nextSort(_sort);
+  loadQuestions(1);
+}
+
 function difficultyCell(q) {
   if (!q.attempts) return '<td style="color:var(--muted);font-size:0.8rem;text-align:center">—</td>';
   const pct = q.accuracy_pct;
@@ -97,6 +116,7 @@ export async function loadQuestions(page) {
   const params = new URLSearchParams({ page: _currentPage });
   if (subject) params.set('subject', subject);
   if (filterId) params.set('id', filterId);
+  if (_sort) params.set('sort', _sort);
   try {
     const res = await fetch('/questions?' + params, { headers: { Authorization: `Bearer ${token()}` } });
     if (res.status === 401) { logout(); return; }
@@ -125,7 +145,7 @@ export async function loadQuestions(page) {
 
     wrap.innerHTML = `
       <table>
-        <thead><tr><th></th><th>Materia</th><th>Respuesta</th><th>Dificultad</th><th>Fecha</th><th>Acciones</th></tr></thead>
+        <thead><tr><th></th><th>Materia</th><th>Respuesta</th><th onclick="toggleDifficultySort()" style="cursor:pointer;user-select:none">Dificultad${_sortIndicator()}</th><th>Fecha</th><th>Acciones</th></tr></thead>
         <tbody>${rows}</tbody>
       </table>
       ${paginationHtml}`;
