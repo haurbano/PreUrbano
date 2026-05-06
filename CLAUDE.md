@@ -19,22 +19,18 @@ Landing page de expectativa + plataforma de práctica ICFES gratuita para estudi
 - **App estudiante:** https://preurbano.com/app
 
 ### Comandos de deploy
+
+Usar siempre `scripts/deploy.sh` — nunca los comandos SSH directos:
+
 ```bash
-# Cambios en backend (Python, HTML del backend, requirements)
-git push origin main
-ssh haurbano@192.168.1.66 "cd /home/haurbano/preurbano-new && git pull && docker compose up -d --build backend"
-
-# Cambios solo en index.html (bind mount)
-git push origin main
-ssh haurbano@192.168.1.66 "cd /home/haurbano/preurbano-new && git pull && docker restart preurbano-new-web-1"
-
-# Cambios en nginx.conf (bind mount)
-git push origin main
-ssh haurbano@192.168.1.66 "cd /home/haurbano/preurbano-new && git pull && docker restart preurbano-new-web-1"
+./scripts/deploy.sh --backend        # Python, HTML del backend, requirements
+./scripts/deploy.sh --web            # index.html o nginx.conf (bind-mounted, sin rebuild)
+./scripts/deploy.sh --all            # ambos contenedores
+./scripts/deploy.sh --backend --no-push  # ya se hizo push, solo despliega
 ```
 
 > **Importante:** Siempre commit + push + `git pull` en el servidor. Nunca usar `scp` directo — el repo y el servidor quedarían desincronizados.
-> `nginx -s reload` a veces no aplica cambios de bind mounts — usar `docker restart preurbano-new-web-1` para garantizar que nginx tome el nuevo config.
+> `nginx -s reload` a veces no aplica cambios de bind mounts — el script usa `docker restart preurbano-new-web-1` para garantizar que nginx tome el nuevo config.
 
 ## Estructura del backend
 ```
