@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from database import get_db
 from analytics.database import get_db as analytics_get_db
 from analytics.recorder import record_attempts
-from models import Question, SimulationConfig, SimulationResult, DEFAULT_CONFIG
+from models import Question, SimulationConfig, SimulationResult, User, DEFAULT_CONFIG
 from schemas import (
     SimulationStartOut,
     SimulationSubmitIn,
@@ -53,6 +53,10 @@ def start_simulation(
         db.commit()
         db.refresh(config)
 
+    user_id = int(token_data["sub"])
+    user = db.query(User).filter(User.id == user_id).first()
+    has_pro = user.has_pro_access if user else False
+
     subjects = body.subjects if body and body.subjects else SUBJECTS
     total_target = body.total_questions if body and body.total_questions else config.questions_per_simulation
 
@@ -61,7 +65,10 @@ def start_simulation(
 
     all_questions = []
     for subject in selected:
-        subject_qs = db.query(Question).filter(Question.subject == subject).all()
+        q_filter = db.query(Question).filter(Question.subject == subject)
+        if not has_pro:
+            q_filter = q_filter.filter(Question.is_pro == False)
+        subject_qs = q_filter.all()
 
         groups: dict[int, list] = {}
         solo: list = []

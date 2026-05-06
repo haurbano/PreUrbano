@@ -33,6 +33,7 @@ async def create_question(
     file: UploadFile = File(...),
     subject: str = Form(...),
     correct_option: str = Form(...),
+    is_pro: bool = Form(False),
     db: Session = Depends(get_db),
     _: str = Depends(verify_token),
 ):
@@ -50,7 +51,7 @@ async def create_question(
     UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
     (UPLOADS_DIR / filename).write_bytes(data)
 
-    question = Question(subject=subject, correct_option=correct_option, image_path=filename)
+    question = Question(subject=subject, correct_option=correct_option, image_path=filename, is_pro=is_pro)
     db.add(question)
     db.commit()
     db.refresh(question)
@@ -78,7 +79,7 @@ _ORDER_CLAUSES: dict[str | None, str] = {
 
 _STATS_SELECT = """
     SELECT q.id, q.subject, q.correct_option, q.image_path,
-           q.group_id, q.created_at,
+           q.is_pro, q.group_id, q.created_at,
            COALESCE(s.total_attempts, 0)   AS attempts,
            COALESCE(s.correct_attempts, 0) AS correct_count,
            CASE WHEN s.total_attempts > 0
@@ -93,6 +94,7 @@ _STATS_SELECT = """
 def list_questions(
     subject: str | None = Query(None),
     id: int | None = Query(None),
+    is_pro: bool | None = Query(None),
     sort: str | None = Query(None, pattern="^(difficulty_asc|difficulty_desc)$"),
     page: int = Query(1, ge=1),
     db: Session = Depends(get_db),
@@ -100,15 +102,13 @@ def list_questions(
 ):
     if id is not None:
         where, params = "q.id = :id", {"id": id}
+        total = db.execute(text(f"SELECT COUNT(*) FROM questions q WHERE {where}"), params).scalar()
         offset, pages = 0, 1
-        total = db.execute(text(f"SELECT COUNT(*) FROM questions q WHERE {where}"), params).scalar()
-    elif subject:
-        where, params = "q.subject = :subject", {"subject": subject}
-        total = db.execute(text(f"SELECT COUNT(*) FROM questions q WHERE {where}"), params).scalar()
-        pages = max(1, -(-total // PAGE_SIZE))
-        offset = (page - 1) * PAGE_SIZE
     else:
-        where, params = "1=1", {}
+        where, params = ("q.subject = :subject", {"subject": subject}) if subject else ("1=1", {})
+        if is_pro is not None:
+            where += " AND q.is_pro = :is_pro_val"
+            params = {**params, "is_pro_val": 1 if is_pro else 0}
         total = db.execute(text(f"SELECT COUNT(*) FROM questions q WHERE {where}"), params).scalar()
         pages = max(1, -(-total // PAGE_SIZE))
         offset = (page - 1) * PAGE_SIZE
@@ -125,6 +125,7 @@ def list_questions(
             subject=r["subject"],
             correct_option=r["correct_option"],
             image_path=r["image_path"],
+            is_pro=bool(r["is_pro"]),
             group_id=r["group_id"],
             created_at=r["created_at"],
             attempts=r["attempts"],
@@ -157,6 +158,9 @@ def update_question(
         if opt not in OPTIONS:
             raise HTTPException(status_code=400, detail="La respuesta correcta debe ser A, B, C o D.")
         q.correct_option = opt
+
+    if body.is_pro is not None:
+        q.is_pro = body.is_pro
 
     if "group_id" in body.model_fields_set:
         if body.group_id is None:

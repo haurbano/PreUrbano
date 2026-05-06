@@ -1,4 +1,4 @@
-import { token, logout, showToast, SUBJECT_LABELS_SHORT, SUBJECT_COLORS } from './shared.js?v=4';
+import { token, logout, showToast, SUBJECT_LABELS_SHORT, SUBJECT_COLORS } from './shared.js?v=5';
 
 function fmtDuration(s) {
   if (s == null) return '—';
@@ -32,7 +32,7 @@ export async function loadUsers() {
 
     wrap.innerHTML = `
       <table>
-        <thead><tr><th>#</th><th>Usuario</th><th>Email</th><th>Sims</th><th>Promedio</th><th>Último</th><th>Estado</th><th>Registro</th></tr></thead>
+        <thead><tr><th>#</th><th>Usuario</th><th>Email</th><th>Sims</th><th>Promedio</th><th>Último</th><th>Estado</th><th>Pro</th><th>Registro</th></tr></thead>
         <tbody>${users.items.map((u, i) => {
           const s = studentsMap[u.id] || {};
           const scoreClass = s.avg_score >= 60 ? 'high' : 'low';
@@ -50,12 +50,43 @@ export async function loadUsers() {
             <td style="text-align:center"><span class="student-score ${scoreClass}">${s.avg_score || 0}%</span></td>
             <td style="color:var(--muted)">${lastDate}</td>
             <td><span class="badge ${u.is_active ? 'badge-active' : 'badge-off'}">${u.is_active ? 'activo' : 'inactivo'}</span></td>
+            <td data-user-id="${u.id}" data-has-pro="${u.has_pro_access}" class="pro-toggle-cell"></td>
             <td style="color:var(--muted)">${new Date(u.created_at).toLocaleString('es-CO')}</td>
           </tr>`;
         }).join('')}
         </tbody>
       </table>`;
+    _renderProToggles();
   } catch { wrap.innerHTML = '<p style="color:var(--red);padding:16px">Error al cargar datos.</p>'; }
+}
+
+function _renderProToggles() {
+  document.querySelectorAll('.pro-toggle-cell').forEach(td => {
+    const userId = parseInt(td.dataset.userId);
+    const hasPro = td.dataset.hasPro === 'true';
+    td.onclick = e => e.stopPropagation();
+    const btn = document.createElement('button');
+    btn.className = 'badge ' + (hasPro ? 'badge-pro' : 'badge-off');
+    btn.style.cssText = 'cursor:pointer;border:none;font-family:inherit';
+    btn.textContent = hasPro ? 'PRO ✓' : 'PRO —';
+    btn.onclick = e => { e.stopPropagation(); toggleProAccess(userId, hasPro); };
+    td.appendChild(btn);
+  });
+}
+
+export async function toggleProAccess(userId, currentValue) {
+  const newVal = !currentValue;
+  try {
+    const res = await fetch(`/admin/users/${userId}`, {
+      method: 'PATCH',
+      headers: { Authorization: `Bearer ${token()}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ has_pro_access: newVal }),
+    });
+    if (res.status === 401) { logout(); return; }
+    if (!res.ok) { showToast('Error al actualizar acceso Pro.'); return; }
+    await loadUsers();
+    showToast(newVal ? '✓ Acceso Pro habilitado' : '✓ Acceso Pro deshabilitado');
+  } catch { showToast('Error de conexión.'); }
 }
 
 export function openUserModal(u, simData = {}) {
@@ -71,6 +102,7 @@ export function openUserModal(u, simData = {}) {
   document.getElementById('modal-institution').innerHTML  = u.institution || empty;
   document.getElementById('modal-grade').innerHTML        = u.grade || empty;
   document.getElementById('modal-status').innerHTML    = `<span class="badge ${u.is_active ? 'badge-active' : 'badge-off'}">${u.is_active ? 'activo' : 'inactivo'}</span>`;
+  document.getElementById('modal-pro-status').innerHTML = `<span class="badge ${u.has_pro_access ? 'badge-pro' : 'badge-off'}">${u.has_pro_access ? 'habilitado' : 'deshabilitado'}</span>`;
   document.getElementById('modal-created').textContent = new Date(u.created_at).toLocaleString('es-CO');
 
   const simSection = document.getElementById('modal-sim-section');
@@ -93,6 +125,8 @@ export function openUserModal(u, simData = {}) {
   const btn = document.getElementById('modal-toggle-btn');
   btn.textContent   = u.is_active ? 'Bloquear usuario' : 'Habilitar usuario';
   btn.style.background = u.is_active ? 'var(--red)' : 'var(--green)';
+  const proBtn = document.getElementById('modal-pro-btn');
+  proBtn.textContent = u.has_pro_access ? 'Deshabilitar acceso Pro' : 'Habilitar acceso Pro';
   document.getElementById('user-modal').classList.remove('hidden');
 }
 
@@ -132,6 +166,30 @@ window.openStudentSimulations = async function(userId, userName) {
     document.getElementById('sim-list-modal').classList.remove('hidden');
   } catch { showToast('Error al cargar simulacros.'); }
 };
+
+export async function toggleUserPro() {
+  if (!currentModalUser) return;
+  const newVal = !currentModalUser.has_pro_access;
+  const proBtn = document.getElementById('modal-pro-btn');
+  proBtn.disabled = true;
+  proBtn.textContent = 'Guardando…';
+  try {
+    const res = await fetch(`/admin/users/${currentModalUser.id}`, {
+      method: 'PATCH',
+      headers: { Authorization: `Bearer ${token()}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ has_pro_access: newVal }),
+    });
+    if (res.status === 401) { logout(); return; }
+    if (!res.ok) { showToast('Error al actualizar.'); return; }
+    const updated = await res.json();
+    currentModalUser = { ...currentModalUser, ...updated, simData: currentModalUser.simData };
+    document.getElementById('modal-pro-status').innerHTML = `<span class="badge ${updated.has_pro_access ? 'badge-pro' : 'badge-off'}">${updated.has_pro_access ? 'habilitado' : 'deshabilitado'}</span>`;
+    proBtn.textContent = updated.has_pro_access ? 'Deshabilitar acceso Pro' : 'Habilitar acceso Pro';
+    showToast(updated.has_pro_access ? '✓ Acceso Pro habilitado' : '✓ Acceso Pro deshabilitado');
+    loadUsers();
+  } catch { showToast('Error de conexión.'); }
+  proBtn.disabled = false;
+}
 
 export async function toggleUser() {
   if (!currentModalUser) return;

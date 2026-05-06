@@ -81,6 +81,7 @@ export async function saveQuestion() {
     fd.append('file', selectedFile);
     fd.append('subject', subject);
     fd.append('correct_option', correct);
+    fd.append('is_pro', document.getElementById('new-is-pro').checked);
     const res = await fetch('/questions', {
       method: 'POST',
       headers: { Authorization: `Bearer ${token()}` },
@@ -95,6 +96,7 @@ export async function saveQuestion() {
       document.getElementById('file-input').value = '';
       document.getElementById('new-subject').value = '';
       document.getElementById('new-correct').value = '';
+      document.getElementById('new-is-pro').checked = false;
       updateSaveBtn();
       await loadQuestions(1);
       document.getElementById('table-questions').scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -113,9 +115,11 @@ export async function loadQuestions(page) {
   wrap.innerHTML = '<p style="color:var(--muted);padding:16px">Cargando…</p>';
   const subject = document.getElementById('filter-subject')?.value || '';
   const filterId = document.getElementById('filter-id')?.value || '';
+  const filterTipo = document.getElementById('filter-tipo')?.value || '';
   const params = new URLSearchParams({ page: _currentPage });
   if (subject) params.set('subject', subject);
   if (filterId) params.set('id', filterId);
+  if (filterTipo !== '') params.set('is_pro', filterTipo);
   if (_sort) params.set('sort', _sort);
   try {
     const res = await fetch('/questions?' + params, { headers: { Authorization: `Bearer ${token()}` } });
@@ -133,6 +137,7 @@ export async function loadQuestions(page) {
           <span class="badge badge-${q.subject}">${subjectLabel(q.subject)}</span>
           ${q.group_id ? '<span title="Parte de un conjunto" style="margin-left:4px">📎</span>' : ''}
         </td>
+        <td>${q.is_pro ? '<span class="badge badge-pro">PRO</span>' : ''}</td>
         <td><span class="badge badge-option">${q.correct_option}</span></td>
         ${difficultyCell(q)}
         <td style="color:var(--muted)">${new Date(q.created_at).toLocaleDateString('es-CO')}</td>
@@ -145,7 +150,7 @@ export async function loadQuestions(page) {
 
     wrap.innerHTML = `
       <table>
-        <thead><tr><th></th><th>Materia</th><th>Respuesta</th><th onclick="toggleDifficultySort()" style="cursor:pointer;user-select:none">Dificultad${_sortIndicator()}</th><th>Fecha</th><th>Acciones</th></tr></thead>
+        <thead><tr><th></th><th>Materia</th><th>Pro</th><th>Respuesta</th><th onclick="toggleDifficultySort()" style="cursor:pointer;user-select:none">Dificultad${_sortIndicator()}</th><th>Fecha</th><th>Acciones</th></tr></thead>
         <tbody>${rows}</tbody>
       </table>
       ${paginationHtml}`;
@@ -272,6 +277,7 @@ export function openQuestionDetail(q) {
   document.getElementById('detail-meta').innerHTML =
     `<span class="badge badge-${q.subject}">${subjectLabel(q.subject)}</span>` +
     `<span class="badge badge-option">Respuesta correcta: ${q.correct_option}</span>` +
+    (q.is_pro ? `<span class="badge badge-pro">PRO</span>` : '') +
     (q.group_id ? `<span class="badge" style="background:var(--blue,#3b82f6);color:#fff">📎 Conjunto</span>` : '');
 
   document.getElementById('detail-image').src = uploadUrl(q.image_path);
@@ -297,6 +303,11 @@ export function openQuestionDetail(q) {
             <option ${q.correct_option==='C'?'selected':''}>C</option>
             <option ${q.correct_option==='D'?'selected':''}>D</option>
           </select>
+        </div>
+        <div style="display:flex;flex-direction:column;justify-content:flex-end">
+          <label style="display:flex;align-items:center;gap:6px;font-size:0.85rem;cursor:pointer;padding-bottom:4px">
+            <input type="checkbox" id="edit-is-pro" ${q.is_pro ? 'checked' : ''}> Pregunta Pro
+          </label>
         </div>
       </div>
       <div style="display:flex;gap:10px">
@@ -356,19 +367,22 @@ export function openQuestionDetail(q) {
 export async function saveQuestionEdit(id) {
   const subject        = document.getElementById('edit-subject').value;
   const correct_option = document.getElementById('edit-correct').value;
+  const is_pro         = document.getElementById('edit-is-pro')?.checked ?? false;
   try {
     const res = await fetch(`/questions/${id}`, {
       method: 'PATCH',
       headers: { Authorization: `Bearer ${token()}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ subject, correct_option }),
+      body: JSON.stringify({ subject, correct_option, is_pro }),
     });
     if (res.status === 401) { logout(); return; }
     if (!res.ok) { showToast('Error al guardar.'); return; }
     const updated = await res.json();
     _detailQuestion = updated;
+    _questionsCache[id] = updated;
     document.getElementById('detail-meta').innerHTML =
       `<span class="badge badge-${updated.subject}">${subjectLabel(updated.subject)}</span>` +
-      `<span class="badge badge-option">Respuesta correcta: ${updated.correct_option}</span>`;
+      `<span class="badge badge-option">Respuesta correcta: ${updated.correct_option}</span>` +
+      (updated.is_pro ? `<span class="badge badge-pro">PRO</span>` : '');
     showToast('✓ Cambios guardados');
   } catch { showToast('Error de conexión.'); }
 }

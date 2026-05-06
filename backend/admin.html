@@ -43,10 +43,12 @@
         <div class="modal-field"><span class="lbl">Institución</span><span class="val" id="modal-institution"></span></div>
         <div class="modal-field"><span class="lbl">Grado</span><span class="val" id="modal-grade"></span></div>
         <div class="modal-field"><span class="lbl">Estado</span><span class="val" id="modal-status"></span></div>
+        <div class="modal-field"><span class="lbl">Acceso Pro</span><span class="val" id="modal-pro-status"></span></div>
         <div class="modal-field"><span class="lbl">Registro</span><span class="val" id="modal-created"></span></div>
       </div>
       <div id="modal-sim-section" style="display:none"></div>
       <button class="btn" id="modal-toggle-btn" style="margin-top:20px;width:100%" onclick="toggleUser()"></button>
+      <button class="btn" id="modal-pro-btn" style="margin-top:8px;width:100%;background:rgba(168,85,247,0.2);color:#c084fc;border:1px solid rgba(168,85,247,0.4)" onclick="toggleUserPro()"></button>
       <button class="btn" id="modal-delete-btn" style="margin-top:8px;width:100%;background:#ef4444;border-color:#ef4444" onclick="deleteUser()">Eliminar usuario</button>
     </div>
   </div>
@@ -204,6 +206,9 @@
               <option value="C">C</option>
               <option value="D">D</option>
             </select>
+            <label style="display:flex;align-items:center;gap:6px;font-size:0.85rem;color:var(--muted);cursor:pointer;white-space:nowrap">
+              <input type="checkbox" id="new-is-pro" style="accent-color:var(--accent)"> Pregunta Pro
+            </label>
             <button class="q-form-submit" id="save-btn" disabled onclick="saveQuestion()">Guardar</button>
           </div>
         </div>
@@ -218,9 +223,14 @@
             <option value="sociales">Sociales</option>
             <option value="ingles">Inglés</option>
           </select>
+          <select id="filter-tipo" onchange="loadQuestions(1)">
+            <option value="">Todas</option>
+            <option value="false">Solo regulares</option>
+            <option value="true">Solo Pro</option>
+          </select>
           <input type="number" id="filter-id" inputmode="numeric" placeholder="ID #" min="1"
                  style="width:90px" onkeydown="if(event.key==='Enter')loadQuestions(1)" />
-          <button class="action-btn" onclick="document.getElementById('filter-id').value='';loadQuestions(1)">Limpiar</button>
+          <button class="action-btn" onclick="document.getElementById('filter-id').value='';document.getElementById('filter-tipo').value='';loadQuestions(1)">Limpiar</button>
         </div>
         <div id="table-questions"></div>
       </div>
@@ -301,6 +311,6 @@
 
 <div class="toast" id="toast"></div>
 
-<script type="module" src="/static/admin/app.js?v=12"></script>
+<script type="module" src="/static/admin/app.js?v=13"></script>
 </body>
 </html>

@@ -36,6 +36,7 @@ class User(Base):
     picture: Mapped[str | None] = mapped_column(String(500), nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     is_deleted: Mapped[bool] = mapped_column(Boolean, default=False)
+    has_pro_access: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     document_id: Mapped[str | None] = mapped_column(String(50), nullable=True)
     phone: Mapped[str | None] = mapped_column(String(30), nullable=True)
     grade: Mapped[str | None] = mapped_column(String(10), nullable=True)
@@ -63,6 +64,7 @@ class Question(Base):
     subject: Mapped[str] = mapped_column(String(50), index=True)
     correct_option: Mapped[str] = mapped_column(String(1))  # A|B|C|D
     image_path: Mapped[str] = mapped_column(String(255))
+    is_pro: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     group_id: Mapped[int | None] = mapped_column(
         Integer, ForeignKey("question_groups.id", ondelete="SET NULL"), nullable=True, index=True
     )

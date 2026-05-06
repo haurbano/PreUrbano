@@ -86,7 +86,10 @@ def update_user(
     user = db.query(User).filter(User.id == user_id, User.is_deleted == False).first()
     if not user:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
-    user.is_active = body.is_active
+    if body.is_active is not None:
+        user.is_active = body.is_active
+    if body.has_pro_access is not None:
+        user.has_pro_access = body.has_pro_access
     db.commit()
     db.refresh(user)
     return user

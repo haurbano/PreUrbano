@@ -1,6 +1,6 @@
 import { TOKEN_KEY, token, logout, showToast } from './shared.js?v=5';
 import { loadSubscribers } from './subscribers.js?v=5';
-import { loadUsers, openUserModal, toggleUser, closeModal, deleteUser } from './users.js?v=7';
+import { loadUsers, openUserModal, toggleUser, toggleUserPro, toggleProAccess, closeModal, deleteUser } from './users.js?v=8';
 import {
   setFile, updateSaveBtn, handleDragOver, handleDragLeave, handleDrop,
   saveQuestion, loadQuestions, handleQuestionRowClick,
@@ -8,7 +8,7 @@ import {
   handleGroupSelectChange, saveGroupAssignment,
   setReplaceFile, handleReplaceDragOver, handleReplaceDragLeave, handleReplaceDrop,
   replaceQuestionImage, toggleDifficultySort,
-} from './questions.js?v=8';
+} from './questions.js?v=9';
 import { loadSimConfig, saveSimConfig } from './simconfig.js?v=3';
 import { initAnalytics } from './analytics.js?v=1';
 import {
@@ -82,6 +82,8 @@ Object.assign(window, {
   loadUsers,
   openUserModal,
   toggleUser,
+  toggleUserPro,
+  toggleProAccess,
   closeModal,
   deleteUser,
   handleDragOver,

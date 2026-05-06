@@ -52,6 +52,7 @@ class UserOut(BaseModel):
     name: str
     picture: str | None
     is_active: bool
+    has_pro_access: bool = False
     document_id: str | None
     phone: str | None
     grade: str | None
@@ -74,6 +75,7 @@ class QuestionOut(BaseModel):
     subject: str
     correct_option: str
     image_path: str
+    is_pro: bool = False
     group_id: int | None = None
     created_at: datetime
 
@@ -97,6 +99,7 @@ class SubjectDifficultyOut(BaseModel):
 class QuestionUpdate(BaseModel):
     subject: str | None = None
     correct_option: str | None = None
+    is_pro: bool | None = None
     group_id: int | None = None  # None + in model_fields_set → unassign
 
 
@@ -136,7 +139,8 @@ class UsersListOut(BaseModel):
 
 
 class UserEnableUpdate(BaseModel):
-    is_active: bool
+    is_active: bool | None = None
+    has_pro_access: bool | None = None
 
 
 class SimulationConfigOut(BaseModel):
