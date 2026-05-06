@@ -401,7 +401,7 @@ function renderSimQuestion() {
       <img class="sim-question-img" src="/uploads/${q.image_path}" onerror="handleImgError(this,${q.id},'${q.image_path}')" alt="Pregunta ${current}" />
     </div>
     <div class="sim-options">${opts}</div>
-    <button class="sim-nav-btn" onclick="${isLast ? 'submitSim()' : 'nextQuestion()'}">${isLast ? 'Entregar práctica' : 'Siguiente'}</button>`;
+    <button class="sim-nav-btn" onclick="${isLast ? 'submitSim()' : 'nextQuestion()'}"${isAnswered ? '' : ' disabled'}>${isLast ? 'Entregar práctica' : 'Siguiente'}</button>`;
   if (_sim.timeLimitMinutes > 0) updateTimerDisplay();
   if (isAnswered) {
     const correct = q.correct_option;
@@ -436,6 +436,7 @@ function showFeedback(type, message) {
 }
 
 function nextQuestion() {
+  if (!_sim.answered[_sim.currentIndex]) return;
   if (_sim.currentIndex < _sim.questions.length - 1) {
     _sim.currentIndex++;
     renderSimQuestion();
