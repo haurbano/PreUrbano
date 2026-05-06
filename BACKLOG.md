@@ -28,6 +28,12 @@
 - [x] **Habilitar y restringir usuarios por correo**
   En el panel admin, poder aprobar o bloquear usuarios individuales por su dirección de correo. Los usuarios restringidos no pueden acceder aunque tengan cuenta.
 
+- [x] **Eliminar usuarios desde el admin (soft-delete)**
+  El admin puede marcar usuarios como eliminados. Desaparecen del panel, no pueden volver a iniciar sesión y sus datos históricos se conservan (`is_deleted = True`).
+
+- [ ] **Restaurar cuentas eliminadas**
+  Actualmente no hay forma de revertir un soft-delete desde la UI. Agregar opción de restauración (ej. tabla separada de "usuarios eliminados" con botón "Restaurar").
+
 ### Estudiantes
 
 - [x] **Login con Google**
@@ -76,10 +82,16 @@
   El parámetro `page` no tiene máximo. Agregar `le=10000` para prevenir consultas abusivas.
 
 - [ ] **Agregar validación de longitud a campos de perfil** — `schemas.py`
-  Los campos `name`, `document_id` y `phone` en `UserProfileUpdate` no tienen `max_length`. Agregar con `Field(..., max_length=255)`.
+  Los campos `name`, `document_id`, `phone`, `grade` e `institution` en `UserProfileUpdate` no tienen `max_length`. Agregar con `Field(..., max_length=N)` según corresponda.
 
 - [ ] **Lanzar error explícito para `source` inválido** — `schemas.py:17`
   Valor inválido en `source` cae silenciosamente a `"hero"`. Lanzar `ValueError` para exponer errores del cliente.
 
 - [ ] **Agregar logging de eventos de seguridad**
   No se registran intentos de login fallidos, errores de validación de token ni uploads. Agregar logs con `logging.warning()` para auditoría.
+
+- [ ] **Cookie de sesión válida persiste tras soft-delete** — `routers/auth.py`
+  Si un usuario tiene la app abierta al momento de ser eliminado, su cookie sigue activa hasta el próximo request a `/auth/me`. El endpoint `/auth/profile` no verifica `is_deleted`. Agregar la verificación en todos los endpoints protegidos por `verify_user_token_cookie`, o reducir el TTL del token a 1–2 horas.
+
+- [ ] **`PATCH /admin/users/{id}` no verifica `is_deleted`** — `routers/admin.py`
+  El endpoint de bloqueo/habilitación puede operar sobre usuarios eliminados si se llama directamente via API. Agregar filtro `User.is_deleted == False` en esa query.
