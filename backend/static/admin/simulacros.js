@@ -171,12 +171,13 @@ function _renderBancoList(items, pages) {
     : items.map(q => {
         const inSim = selectedIds.has(q.id);
         const badgeCls = `badge-${q.subject}`;
+        const groupAttr = q.group_id ? `,${q.group_id}` : ',null';
         return `<div class="banco-item${inSim ? ' in-sim' : ''}">
           <span class="badge ${badgeCls}" style="font-size:0.68rem;padding:2px 7px;border-radius:6px;font-weight:600;flex-shrink:0">${SUBJECT_LABELS[q.subject] || q.subject}</span>
-          <span style="font-size:0.82rem;color:var(--muted);flex:1">ID #${q.id}</span>
+          <span style="font-size:0.82rem;color:var(--muted);flex:1">ID #${q.id}${q.group_id ? ` <span style="font-size:0.68rem;opacity:0.6">[G${q.group_id}]</span>` : ''}</span>
           ${inSim
             ? `<span style="font-size:0.72rem;color:var(--muted)">ya añadida</span>`
-            : `<button class="action-btn" style="padding:3px 10px;font-size:0.78rem;flex-shrink:0" onclick="addQuestionToSim(${q.id},'${_esc(q.subject)}','${_esc(q.image_path)}')">+</button>`}
+            : `<button class="action-btn" style="padding:3px 10px;font-size:0.78rem;flex-shrink:0" onclick="addQuestionToSim(${q.id},'${_esc(q.subject)}','${_esc(q.image_path)}'${groupAttr})">+</button>`}
         </div>`;
       }).join('');
 
@@ -233,9 +234,33 @@ export function simBancoNextPage() {
   _loadBancoPage();
 }
 
-export function addQuestionToSim(qId, subject, imagePath) {
-  if (_simEditor.questions.some(q => q.id === qId)) return;
-  _simEditor.questions.push({ id: qId, subject, image_path: imagePath });
+export async function addQuestionToSim(qId, subject, imagePath, groupId) {
+  const selectedIds = new Set(_simEditor.questions.map(q => q.id));
+  if (!groupId) {
+    if (selectedIds.has(qId)) return;
+    _simEditor.questions.push({ id: qId, subject, image_path: imagePath });
+    _renderSelectedQuestions();
+    _loadBancoPage();
+    return;
+  }
+
+  try {
+    const res = await fetch(`/questions/groups/${groupId}`, { headers: { Authorization: `Bearer ${token()}` } });
+    if (!res.ok) throw new Error();
+    const group = await res.json();
+    let added = 0;
+    for (const member of group.questions) {
+      if (!selectedIds.has(member.id)) {
+        _simEditor.questions.push({ id: member.id, subject: member.subject, image_path: member.image_path });
+        selectedIds.add(member.id);
+        added++;
+      }
+    }
+    if (added > 0) showToast(`Se agregaron ${added} pregunta${added !== 1 ? 's' : ''} del grupo "${group.name}".`);
+    else showToast('Todas las preguntas del grupo ya estaban en el simulacro.');
+  } catch {
+    showToast('Error al cargar el grupo. Intenta de nuevo.');
+  }
   _renderSelectedQuestions();
   _loadBancoPage();
 }
@@ -355,17 +380,21 @@ export async function openSimulacroResults(id) {
     const rows = data.items.map(r => {
       const date = new Date(r.created_at).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' });
       const scoreColor = r.score >= 60 ? 'var(--green)' : 'var(--red)';
+      // subject_scores values are integers from the API; SUBJECT_LABELS are app constants — safe to inline
+      const areaChips = Object.entries(r.subject_scores || {}).map(([subj, val]) =>
+        `<span style="font-size:0.72rem;opacity:0.85;white-space:nowrap">${_esc(SUBJECT_LABELS[subj] || subj)}: <b>${Number(val)}</b></span>`
+      ).join(' &middot; ');
       return `<tr>
-        <td>${_esc(r.user_name)}</td>
-        <td style="color:var(--muted);font-size:0.82rem">${_esc(r.user_email)}</td>
-        <td style="font-weight:700;color:${scoreColor}">${r.score}%</td>
-        <td>${r.correct_answers}/${r.total_questions}</td>
-        <td style="color:var(--muted);font-size:0.82rem">${date}</td>
-        <td style="color:var(--red);font-size:0.78rem">${r.timed_out ? '⏱ tiempo' : ''}</td>
+        <td>${_esc(r.user_name)}<br><span style="color:var(--muted);font-size:0.78rem">${_esc(r.user_email)}</span></td>
+        <td style="font-weight:700;color:${scoreColor};text-align:center">${Number(r.total_score)}</td>
+        <td style="font-size:0.8rem;color:var(--muted)">${areaChips || '—'}</td>
+        <td style="text-align:center">${Number(r.correct_answers)}/${Number(r.total_questions)}</td>
+        <td style="color:var(--muted);font-size:0.82rem">${_esc(date)}</td>
+        <td style="color:var(--red);font-size:0.78rem">${r.timed_out ? '&#x23F1;' : ''}</td>
       </tr>`;
     }).join('');
     body.innerHTML = `<table class="sim-summary-table">
-      <thead><tr><th>Estudiante</th><th>Email</th><th>Score</th><th>Correctas</th><th>Fecha</th><th></th></tr></thead>
+      <thead><tr><th>Estudiante</th><th>Puntaje total</th><th>Por área</th><th>Correctas</th><th>Fecha</th><th></th></tr></thead>
       <tbody>${rows}</tbody>
     </table>`;
   } catch {

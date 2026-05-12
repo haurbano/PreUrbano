@@ -17,7 +17,7 @@ import {
   addQuestionToSim, removeQuestionFromSim, moveQuestionInSim,
   openSimulacroResults,
   simChangeBancoSubject, simBancoPrevPage, simBancoNextPage,
-} from './simulacros.js?v=2';
+} from './simulacros.js?v=3';
 
 let currentView = 'subscribers';
 

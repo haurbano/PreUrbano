@@ -210,6 +210,8 @@ class SimulationSubmitOut(BaseModel):
     incorrect: int
     breakdown: dict
     timed_out: bool = False
+    subject_scores: dict = {}
+    total_score: int = 0
 
 
 class SubjectBreakdown(BaseModel):
@@ -227,6 +229,8 @@ class SimulationSummary(BaseModel):
     breakdown: dict
     timed_out: bool = False
     duration_seconds: int | None = None
+    subject_scores: dict = {}
+    total_score: int = 0
 
 
 class StudentSimulationsOut(BaseModel):
@@ -319,6 +323,8 @@ class SimulacroSubmitOut(BaseModel):
     incorrect: int
     breakdown: dict
     timed_out: bool = False
+    subject_scores: dict = {}
+    total_score: int = 0
 
 
 class SimulacroAvailable(BaseModel):
@@ -356,6 +362,8 @@ class SimulacroResultAdminRow(BaseModel):
     correct_answers: int
     timed_out: bool
     created_at: datetime
+    subject_scores: dict = {}
+    total_score: int = 0
 
 
 class SimulacroResultsAdminOut(BaseModel):

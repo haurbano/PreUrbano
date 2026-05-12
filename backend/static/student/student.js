@@ -202,9 +202,10 @@ function renderHome(data) {
   const recentRows = data.simulations.slice(0, 5).map(s => {
     const date = new Date(s.created_at).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' });
     const scoreColor = s.score_pct >= 60 ? 'var(--green)' : 'var(--red)';
+    const displayScore = s.total_score != null ? Number(s.total_score) : s.score_pct;
     return `<div class="history-row">
       <span class="history-date">${date}</span>
-      <span class="history-score" style="color:${scoreColor}">${s.score_pct}%</span>
+      <span class="history-score" style="color:${scoreColor}">${displayScore}</span>
       <span class="history-detail">${s.correct_answers} correctas de ${s.total_questions}</span>
     </div>`;
   }).join('');
@@ -473,24 +474,26 @@ function renderSimResult(data) {
   const c = document.getElementById('sim-container');
   const scoreColor = data.score >= 60 ? 'var(--green)' : 'var(--red)';
   const timeoutBanner = data.timed_out
-    ? `<div class="sim-timeout-banner">⏱ Tiempo agotado — la práctica fue enviada automáticamente</div>`
+    ? '<div class="sim-timeout-banner">&#x23F1; Tiempo agotado &mdash; la práctica fue enviada automáticamente</div>'
     : '';
   const breakdown = Object.entries(data.breakdown || {}).map(([subject, bd]) => {
     const pct = bd.total > 0 ? (bd.correct / bd.total * 100) : 0;
+    const areaVal = (data.subject_scores || {})[subject];
+    const areaTag = areaVal !== undefined ? ` <span style="opacity:0.65;font-size:0.85em">(${Number(areaVal)})</span>` : '';
     return `<div class="sim-breakdown-row">
       <span class="bd-label">${SUBJECT_LABELS[subject] || subject}</span>
       <div class="bd-bar"><div class="bd-fill" style="width:${pct}%"></div></div>
-      <span class="bd-val">${bd.correct}/${bd.total}</span>
+      <span class="bd-val">${Number(bd.correct)}/${Number(bd.total)}${areaTag}</span>
     </div>`;
   }).join('');
-  c.innerHTML = `
-    ${timeoutBanner}
-    <div class="sim-result-score">
-      <div class="big-score" style="color:${scoreColor}">${data.score}<span class="pct">%</span></div>
-      <div class="score-label">${data.correct} correctas de ${data.total}</div>
-    </div>
-    ${breakdown ? `<div class="sim-breakdown">${breakdown}</div>` : ''}
-    <button class="sim-back-btn" onclick="loadSimIdle()">Hacer otra práctica</button>`;
+  const displayScore = data.total_score != null ? Number(data.total_score) : Number(data.score);
+  c.innerHTML = timeoutBanner
+    + '<div class="sim-result-score">'
+    + '<div class="big-score" style="color:' + scoreColor + '">' + displayScore + '</div>'
+    + '<div class="score-label">Puntaje total &middot; ' + Number(data.correct) + ' correctas de ' + Number(data.total) + '</div>'
+    + '</div>'
+    + (breakdown ? '<div class="sim-breakdown">' + breakdown + '</div>' : '')
+    + '<button class="sim-back-btn" onclick="loadSimIdle()">Hacer otra práctica</button>';
 }
 
 // ── Simulacro curado ──────────────────────────────────────────────────────────
@@ -531,28 +534,30 @@ function renderCuradoStatus(data) {
     const r = data.last_result;
     const scoreColor = r && r.score >= 60 ? 'var(--green)' : 'var(--red)';
     const timeoutBanner = r && r.timed_out
-      ? `<div class="sim-timeout-banner">⏱ Tiempo agotado — el simulacro fue enviado automáticamente</div>`
+      ? '<div class="sim-timeout-banner">&#x23F1; Tiempo agotado &mdash; el simulacro fue enviado automáticamente</div>'
       : '';
     const breakdown = r ? Object.entries(r.breakdown || {}).map(([subject, bd]) => {
       const pct = bd.total > 0 ? (bd.correct / bd.total * 100) : 0;
+      const areaVal = (r.subject_scores || {})[subject];
+      const areaTag = areaVal !== undefined ? ` <span style="opacity:0.65;font-size:0.85em">(${Number(areaVal)})</span>` : '';
       return `<div class="sim-breakdown-row">
         <span class="bd-label">${SUBJECT_LABELS[subject] || subject}</span>
         <div class="bd-bar"><div class="bd-fill" style="width:${pct}%"></div></div>
-        <span class="bd-val">${bd.correct}/${bd.total}</span>
+        <span class="bd-val">${Number(bd.correct)}/${Number(bd.total)}${areaTag}</span>
       </div>`;
     }).join('') : '';
-    c.innerHTML = `
-      <div class="sim-card" style="max-width:680px;margin:0 auto">
-        <h2 style="margin-bottom:4px">${_escHtml(data.name)}</h2>
-        <p class="sub">Ya completaste este simulacro.</p>
-        ${timeoutBanner}
-        ${r ? `<div class="sim-result-score">
-          <div class="big-score" style="color:${scoreColor}">${r.score}<span class="pct">%</span></div>
-          <div class="score-label">${r.correct} correctas de ${r.total}</div>
-        </div>` : ''}
-        ${breakdown ? `<div class="sim-breakdown">${breakdown}</div>` : ''}
-        <p style="font-size:0.82rem;color:var(--muted);text-align:center;margin-top:16px">Cuando el admin publique un nuevo simulacro, podrás participar.</p>
-      </div>`;
+    const displayScore = r && r.total_score != null ? Number(r.total_score) : (r ? Number(r.score) : 0);
+    c.innerHTML = '<div class="sim-card" style="max-width:680px;margin:0 auto">'
+      + '<h2 style="margin-bottom:4px">' + _escHtml(data.name) + '</h2>'
+      + '<p class="sub">Ya completaste este simulacro.</p>'
+      + timeoutBanner
+      + (r ? '<div class="sim-result-score">'
+          + '<div class="big-score" style="color:' + scoreColor + '">' + displayScore + '</div>'
+          + '<div class="score-label">Puntaje total &middot; ' + Number(r.correct) + ' correctas de ' + Number(r.total) + '</div>'
+          + '</div>' : '')
+      + (breakdown ? '<div class="sim-breakdown">' + breakdown + '</div>' : '')
+      + '<p style="font-size:0.82rem;color:var(--muted);text-align:center;margin-top:16px">Cuando el admin publique un nuevo simulacro, podrás participar.</p>'
+      + '</div>';
     return;
   }
 
@@ -732,25 +737,27 @@ function renderCuradoResult(data) {
   const c = document.getElementById('curado-container');
   const scoreColor = data.score >= 60 ? 'var(--green)' : 'var(--red)';
   const timeoutBanner = data.timed_out
-    ? `<div class="sim-timeout-banner">⏱ Tiempo agotado — el simulacro fue enviado automáticamente</div>`
+    ? '<div class="sim-timeout-banner">&#x23F1; Tiempo agotado &mdash; el simulacro fue enviado automáticamente</div>'
     : '';
   const breakdown = Object.entries(data.breakdown || {}).map(([subject, bd]) => {
     const pct = bd.total > 0 ? (bd.correct / bd.total * 100) : 0;
+    const areaVal = (data.subject_scores || {})[subject];
+    const areaTag = areaVal !== undefined ? ` <span style="opacity:0.65;font-size:0.85em">(${Number(areaVal)})</span>` : '';
     return `<div class="sim-breakdown-row">
       <span class="bd-label">${SUBJECT_LABELS[subject] || subject}</span>
       <div class="bd-bar"><div class="bd-fill" style="width:${pct}%"></div></div>
-      <span class="bd-val">${bd.correct}/${bd.total}</span>
+      <span class="bd-val">${Number(bd.correct)}/${Number(bd.total)}${areaTag}</span>
     </div>`;
   }).join('');
-  c.innerHTML = `
-    <div class="sim-card" style="max-width:680px;margin:0 auto">
-      ${timeoutBanner}
-      <div class="sim-result-score">
-        <div class="big-score" style="color:${scoreColor}">${data.score}<span class="pct">%</span></div>
-        <div class="score-label">${data.correct} correctas de ${data.total}</div>
-      </div>
-      ${breakdown ? `<div class="sim-breakdown">${breakdown}</div>` : ''}
-    </div>`;
+  const displayScore = data.total_score != null ? Number(data.total_score) : Number(data.score);
+  c.innerHTML = '<div class="sim-card" style="max-width:680px;margin:0 auto">'
+    + timeoutBanner
+    + '<div class="sim-result-score">'
+    + '<div class="big-score" style="color:' + scoreColor + '">' + displayScore + '</div>'
+    + '<div class="score-label">Puntaje total &middot; ' + Number(data.correct) + ' correctas de ' + Number(data.total) + '</div>'
+    + '</div>'
+    + (breakdown ? '<div class="sim-breakdown">' + breakdown + '</div>' : '')
+    + '</div>';
 }
 
 // ── Progress ──────────────────────────────────────────────────────────────────
@@ -813,9 +820,10 @@ function renderProgress(data) {
   const historyRows = data.simulations.map(s => {
     const date = new Date(s.created_at).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' });
     const scoreColor = s.score_pct >= 60 ? 'var(--green)' : 'var(--red)';
+    const displayScore = s.total_score != null ? Number(s.total_score) : s.score_pct;
     return `<div class="history-row">
       <span class="history-date">${date}</span>
-      <span class="history-score" style="color:${scoreColor}">${s.score_pct}%</span>
+      <span class="history-score" style="color:${scoreColor}">${displayScore}</span>
       <span class="history-detail">${s.correct_answers} correctas de ${s.total_questions}</span>
     </div>`;
   }).join('');

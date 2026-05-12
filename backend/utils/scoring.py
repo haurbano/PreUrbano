@@ -14,3 +14,14 @@ def compute_breakdown(questions: list[dict], answers_map: dict[int, str]) -> tup
             correct += 1
             breakdown[subject]["correct"] += 1
     return correct, breakdown
+
+
+def subject_scores(breakdown: dict) -> dict[str, int]:
+    return {
+        subj: score_pct(bd.get("correct", 0), bd.get("total", 0))
+        for subj, bd in breakdown.items()
+    }
+
+
+def total_score(subject_scores_map: dict[str, int]) -> int:
+    return sum(subject_scores_map.values())

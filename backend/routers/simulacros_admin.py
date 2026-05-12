@@ -8,9 +8,38 @@ from schemas import (
     SimulacroResultAdminRow, SimulacroResultsAdminOut, QuestionOut,
 )
 from auth import verify_token
-from utils.scoring import score_pct
+from utils.scoring import score_pct, subject_scores, total_score
 
 router = APIRouter()
+
+
+def _expand_groups_preserving_order(question_ids: list[int], db: Session) -> list[int]:
+    """Expande los question_ids: si una pregunta tiene group_id, reemplaza por todos los miembros del grupo (orden por id). Deduplica preservando primera aparición."""
+    qs = db.query(Question.id, Question.group_id).filter(Question.id.in_(question_ids)).all()
+    group_id_of = {q.id: q.group_id for q in qs}
+
+    group_ids = {gid for gid in group_id_of.values() if gid is not None}
+    members_by_group: dict[int, list[int]] = {}
+    if group_ids:
+        members = (
+            db.query(Question.id, Question.group_id)
+            .filter(Question.group_id.in_(group_ids))
+            .order_by(Question.group_id, Question.id)
+            .all()
+        )
+        for m in members:
+            members_by_group.setdefault(m.group_id, []).append(m.id)
+
+    seen: set[int] = set()
+    result: list[int] = []
+    for qid in question_ids:
+        gid = group_id_of.get(qid)
+        candidates = members_by_group.get(gid, [qid]) if gid else [qid]
+        for cid in candidates:
+            if cid not in seen:
+                seen.add(cid)
+                result.append(cid)
+    return result
 
 
 def _get_simulacro_or_404(sim_id: int, db: Session) -> Simulacro:
@@ -63,11 +92,12 @@ def create_simulacro(
     if not body.question_ids:
         raise HTTPException(status_code=400, detail="Se requiere al menos una pregunta.")
     _validate_question_ids(body.question_ids, db)
+    qids = _expand_groups_preserving_order(body.question_ids, db)
 
     sim = Simulacro(name=body.name, time_limit_minutes=body.time_limit_minutes)
     db.add(sim)
     db.flush()
-    for i, qid in enumerate(body.question_ids):
+    for i, qid in enumerate(qids):
         db.add(SimulacroQuestion(simulacro_id=sim.id, question_id=qid, order=i))
     db.commit()
     db.refresh(sim)
@@ -113,8 +143,9 @@ def update_simulacro(
         if not body.question_ids:
             raise HTTPException(status_code=400, detail="Se requiere al menos una pregunta.")
         _validate_question_ids(body.question_ids, db)
+        qids = _expand_groups_preserving_order(body.question_ids, db)
         db.query(SimulacroQuestion).filter(SimulacroQuestion.simulacro_id == sim_id).delete()
-        for i, qid in enumerate(body.question_ids):
+        for i, qid in enumerate(qids):
             db.add(SimulacroQuestion(simulacro_id=sim_id, question_id=qid, order=i))
     db.commit()
     db.refresh(sim)
@@ -180,6 +211,8 @@ def get_simulacro_results(
     for r in results:
         u = users.get(r.user_id)
         score = score_pct(r.correct_answers, r.total_questions)
+        ss = subject_scores(r.breakdown or {})
+        ts = total_score(ss)
         rows.append(SimulacroResultAdminRow(
             id=r.id,
             user_id=r.user_id,
@@ -190,5 +223,7 @@ def get_simulacro_results(
             correct_answers=r.correct_answers,
             timed_out=r.timed_out,
             created_at=r.created_at,
+            subject_scores=ss,
+            total_score=ts,
         ))
     return SimulacroResultsAdminOut(items=rows, total=len(rows))

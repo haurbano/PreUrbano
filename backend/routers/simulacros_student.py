@@ -11,7 +11,7 @@ from schemas import (
 )
 from auth import verify_user_token_cookie
 from utils.session_store import TTLDict
-from utils.scoring import score_pct, compute_breakdown
+from utils.scoring import score_pct, compute_breakdown, subject_scores, total_score
 
 router = APIRouter()
 
@@ -39,6 +39,8 @@ def get_active_simulacro(
 
     if result:
         score = score_pct(result.correct_answers, result.total_questions)
+        ss = subject_scores(result.breakdown or {})
+        ts = total_score(ss)
         last_result = SimulacroSubmitOut(
             score=score,
             total=result.total_questions,
@@ -46,6 +48,8 @@ def get_active_simulacro(
             incorrect=result.total_questions - result.correct_answers,
             breakdown=result.breakdown or {},
             timed_out=result.timed_out,
+            subject_scores=ss,
+            total_score=ts,
         )
         return SimulacroAvailable(
             available=False, already_taken=True,
@@ -139,6 +143,8 @@ def submit_simulacro(
     correct, breakdown = compute_breakdown(session["questions"], answers_map)
     total = len(session["questions"])
     score = score_pct(correct, total)
+    ss = subject_scores(breakdown)
+    ts = total_score(ss)
 
     question_results = [
         (q["id"], answers_map.get(q["id"]) == q["correct_option"])
@@ -165,12 +171,16 @@ def submit_simulacro(
         ).first()
         if existing:
             existing_score = score_pct(existing.correct_answers, existing.total_questions)
+            ex_ss = subject_scores(existing.breakdown or {})
+            ex_ts = total_score(ex_ss)
             return SimulacroSubmitOut(
                 score=existing_score, total=existing.total_questions,
                 correct=existing.correct_answers,
                 incorrect=existing.total_questions - existing.correct_answers,
                 breakdown=existing.breakdown or {},
                 timed_out=existing.timed_out,
+                subject_scores=ex_ss,
+                total_score=ex_ts,
             )
         raise
 
@@ -178,4 +188,6 @@ def submit_simulacro(
         score=score, total=total, correct=correct,
         incorrect=total - correct, breakdown=breakdown,
         timed_out=body.timed_out,
+        subject_scores=ss,
+        total_score=ts,
     )
