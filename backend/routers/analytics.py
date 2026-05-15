@@ -28,9 +28,14 @@ SELECT q.id, q.subject, q.correct_option, q.image_path, q.group_id, q.created_at
 FROM questions q
 JOIN analytics.question_stats s ON s.question_id = q.id
 WHERE s.total_attempts >= :min_attempts
+  AND (:subject IS NULL OR q.subject = :subject)
 ORDER BY accuracy_pct ASC, s.total_attempts DESC
 LIMIT :limit
 """
+
+_VALID_SUBJECTS = {
+    "matematicas", "ciencias_naturales", "lectura_critica", "sociales", "ingles"
+}
 
 
 @router.get("/analytics/subjects", response_model=list[SubjectDifficultyOut])
@@ -55,12 +60,14 @@ def subjects_ranking(
 def hardest_questions(
     min_attempts: int = Query(5, ge=1, le=1000),
     limit: int = Query(20, ge=1, le=100),
+    subject: str | None = Query(None),
     db: Session = Depends(get_db),
     _: str = Depends(verify_token),
 ):
+    subject_filter = subject if subject in _VALID_SUBJECTS else None
     rows = db.execute(
         text(_HARDEST_SQL),
-        {"min_attempts": min_attempts, "limit": limit},
+        {"min_attempts": min_attempts, "limit": limit, "subject": subject_filter},
     ).mappings().all()
     return [
         QuestionWithStats(

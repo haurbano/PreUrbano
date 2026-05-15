@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/static/shared/base.css?v=2" />
-  <link rel="stylesheet" href="/static/admin/admin.css?v=2" />
+  <link rel="stylesheet" href="/static/admin/admin.css?v=3" />
 </head>
 <body>
 
@@ -213,23 +213,36 @@
       <div class="view active" id="view-analytics">
         <div class="section-header" style="margin-bottom:24px">
           <h2>Analítica</h2>
+          <button class="refresh-btn" onclick="initAnalytics()">↻ Actualizar</button>
         </div>
 
         <div class="analytics-block">
           <h3>Materias por dificultad</h3>
-          <div id="analytics-subjects"><p>Cargando...</p></div>
+          <div id="analytics-subjects" aria-live="polite"><p class="empty-state">Cargando…</p></div>
+          <p class="last-updated" id="subjects-updated"></p>
         </div>
 
         <div class="analytics-block">
           <h3>Preguntas más difíciles</h3>
-          <label>Mínimo de intentos:
+          <div class="filter-row" style="margin-bottom:14px">
+            <label for="analytics-subject-filter" class="sr-only">Filtrar por materia</label>
+            <select id="analytics-subject-filter" aria-label="Filtrar por materia">
+              <option value="">Todas las materias</option>
+              <option value="matematicas">Matemáticas</option>
+              <option value="ciencias_naturales">Ciencias Naturales</option>
+              <option value="lectura_critica">Lectura Crítica</option>
+              <option value="sociales">Sociales</option>
+              <option value="ingles">Inglés</option>
+            </select>
+            <label for="min-attempts-select">Mínimo de intentos:</label>
             <select id="min-attempts-select">
               <option value="5" selected>5</option>
               <option value="10">10</option>
               <option value="20">20</option>
             </select>
-          </label>
-          <div id="analytics-hardest"><p>Cargando...</p></div>
+          </div>
+          <div id="analytics-hardest" aria-live="polite"><p class="empty-state">Cargando…</p></div>
+          <p class="last-updated" id="hardest-updated"></p>
         </div>
       </div>
 
@@ -282,6 +295,6 @@
 
 <div class="toast" id="toast"></div>
 
-<script type="module" src="/static/admin/app.js?v=15"></script>
+<script type="module" src="/static/admin/app.js?v=16"></script>
 </body>
 </html>

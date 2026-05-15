@@ -364,10 +364,37 @@ tbody tr.clickable { cursor: pointer; }
 .text-gray  { color: var(--muted); }
 
 /* Analytics view */
-.analytics-block { margin-bottom: 32px; }
+.analytics-block { margin-bottom: 36px; }
 .analytics-block h3 {
   font-size: 0.82rem; font-weight: 600; color: var(--muted);
   text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 14px;
 }
 .analytics-block label { font-size: 0.85rem; color: var(--muted); display: inline-flex; align-items: center; gap: 8px; margin-bottom: 14px; }
 .analytics-block select { background: var(--surface); border: 1px solid var(--border); color: var(--text); border-radius: 8px; padding: 6px 10px; font-family: 'Inter', sans-serif; font-size: 0.85rem; cursor: pointer; }
+
+/* Difficulty bar inline */
+.difficulty-cell { display: flex; align-items: center; gap: 10px; min-width: 160px; }
+.difficulty-pct { font-weight: 700; font-variant-numeric: tabular-nums; min-width: 38px; text-align: right; font-size: 0.88rem; }
+.difficulty-bar { flex: 1; height: 5px; background: rgba(255,255,255,0.06); border-radius: 3px; overflow: hidden; }
+.difficulty-bar > span { display: block; height: 100%; border-radius: 3px; transition: width 0.4s ease; }
+.difficulty-bar > span.low  { background: #f87171; }
+.difficulty-bar > span.mid  { background: #fbbf24; }
+.difficulty-bar > span.high { background: #34d399; }
+
+/* Worst subject row accent */
+tbody tr.row-focus { box-shadow: inset 3px 0 0 #f87171; }
+
+/* Empty / loading state */
+.empty-state { color: var(--muted); padding: 14px 0; font-size: 0.88rem; }
+
+/* Tabular numbers in number cells */
+td.num { font-variant-numeric: tabular-nums; }
+
+/* Last-updated timestamp */
+.last-updated { font-size: 0.75rem; color: var(--muted); margin-top: 8px; }
+
+/* Visually hidden (accessible label helper) */
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+}

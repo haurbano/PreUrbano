@@ -9,7 +9,7 @@ import {
   replaceQuestionImage, toggleDifficultySort,
 } from './questions.js?v=9';
 import { loadSimConfig, saveSimConfig } from './simconfig.js?v=3';
-import { initAnalytics } from './analytics.js?v=1';
+import { initAnalytics } from './analytics.js?v=2';
 import {
   loadSimulacros, openSimulacroEditor, saveSimulacro,
   activateSimulacro, deactivateSimulacro, deleteSimulacro,
