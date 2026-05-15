@@ -2,42 +2,6 @@ from datetime import datetime
 from pydantic import BaseModel, EmailStr, Field, field_validator
 
 
-class SubscribeRequest(BaseModel):
-    email: EmailStr
-    source: str = "hero"
-
-    @field_validator("email", mode="before")
-    @classmethod
-    def normalize_email(cls, v: str) -> str:
-        return v.strip().lower()
-
-    @field_validator("source")
-    @classmethod
-    def validate_source(cls, v: str) -> str:
-        if v not in ("hero", "cta"):
-            return "hero"
-        return v
-
-
-class SubscriberOut(BaseModel):
-    id: int
-    email: str
-    source: str
-    created_at: datetime
-
-    model_config = {"from_attributes": True}
-
-
-class SubscribersListOut(BaseModel):
-    items: list[SubscriberOut]
-    total: int
-    total_hero: int
-    total_cta: int
-    page: int
-    page_size: int
-    pages: int
-
-
 class LoginRequest(BaseModel):
     password: str
 

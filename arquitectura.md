@@ -19,9 +19,8 @@ graph TB
             Main["main.py\nCORS · SessionMiddleware\nRouters · StaticFiles"]
 
             subgraph Routers
-                R1["subscribe.py\nPOST /api/subscribe"]
                 R2["auth.py\nGET /auth/google/login\nGET /auth/google/callback\nGET /auth/me\nPUT /auth/profile"]
-                R3["admin.py\nPOST /admin/login\nGET /admin/subscribers\nGET /admin/users\nGET /admin/students\nGET /admin/simulations"]
+                R3["admin.py\nPOST /admin/login\nGET /admin/users\nGET /admin/students\nGET /admin/simulations"]
                 R4["questions.py\nCRUD /admin/questions\nCRUD /admin/questions/groups"]
                 R5["simulations.py\nPOST /api/simulation/start\nPOST /api/simulation/submit"]
                 R6["simulacros_admin.py\nCRUD /admin/simulacros"]
@@ -41,13 +40,13 @@ graph TB
         end
 
         subgraph Storage["Volúmenes"]
-            DB[("db.sqlite\nSubscriber\nUser\nQuestion\nQuestionGroup\nSimulationResult\nSimulacro\nSimulacroResult\nSimulationConfig")]
+            DB[("db.sqlite\nUser\nQuestion\nQuestionGroup\nSimulationResult\nSimulacro\nSimulacroResult\nSimulationConfig")]
             ADB[("analytics.sqlite\nImageLoadError")]
             UPL[("uploads/\nimágenes PNG/JPG/WebP")]
         end
 
         subgraph Static["Static files"]
-            S1["static/admin/\napp.js · shared.js\nquestions.js · users.js\nsimulacos.js · simconfig.js\nsubscribers.js · students.js"]
+            S1["static/admin/\napp.js · shared.js\nquestions.js · users.js\nsimulacos.js · simconfig.js\nstudents.js"]
             S2["static/student/\nstudent.js · student.css"]
             S3["static/shared/\nbase.css"]
         end

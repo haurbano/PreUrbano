@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 from sqlalchemy import text
 from database import engine, Base
-from routers import subscribe, admin
+from routers import admin
 from routers import auth as auth_router
 from routers import questions as questions_router
 from routers import simulations as sim_router
@@ -49,7 +49,6 @@ app.add_middleware(
     allow_headers=["Authorization", "Content-Type"],
 )
 
-app.include_router(subscribe.router, prefix="/api")
 app.include_router(admin.router, prefix="/admin")
 app.include_router(auth_router.router, prefix="/auth")
 app.include_router(questions_router.router, prefix="/admin")

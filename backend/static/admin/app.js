@@ -1,5 +1,4 @@
 import { TOKEN_KEY, token, logout, showToast } from './shared.js?v=5';
-import { loadSubscribers } from './subscribers.js?v=5';
 import { loadUsers, openUserModal, toggleUser, toggleUserPro, toggleProAccess, closeModal, deleteUser } from './users.js?v=8';
 import {
   setFile, updateSaveBtn, handleDragOver, handleDragLeave, handleDrop,
@@ -19,7 +18,7 @@ import {
   simChangeBancoSubject, simBancoPrevPage, simBancoNextPage,
 } from './simulacros.js?v=3';
 
-let currentView = 'subscribers';
+let currentView = 'analytics';
 
 async function login() {
   const pwd = document.getElementById('pwd').value;
@@ -40,7 +39,7 @@ async function login() {
 function showDashboard() {
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('dashboard').classList.add('visible');
-  loadSubscribers();
+  initAnalytics();
 }
 
 export function switchView(view) {
@@ -49,7 +48,6 @@ export function switchView(view) {
   document.getElementById('view-' + view).classList.add('active');
   document.getElementById('nav-' + view).classList.add('active');
   currentView = view;
-  if (view === 'subscribers') loadSubscribers();
   if (view === 'users')       loadUsers();
   if (view === 'banco')       loadQuestions();
   if (view === 'simconfig')   loadSimConfig();
@@ -78,7 +76,6 @@ Object.assign(window, {
   logout,
   switchView,
   backToQuestions,
-  loadSubscribers,
   loadUsers,
   openUserModal,
   toggleUser,

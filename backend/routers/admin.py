@@ -3,12 +3,10 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from database import get_db
-from models import Subscriber, User, SimulationConfig, SimulationResult, DEFAULT_CONFIG
+from models import User, SimulationConfig, SimulationResult, DEFAULT_CONFIG
 from schemas import (
     LoginRequest,
     TokenResponse,
-    SubscriberOut,
-    SubscribersListOut,
     UserOut,
     UsersListOut,
     UserEnableUpdate,
@@ -38,24 +36,6 @@ def login(body: LoginRequest):
     if body.password != ADMIN_PASSWORD:
         raise HTTPException(status_code=401, detail="Contraseña incorrecta")
     return {"access_token": create_token()}
-
-
-@router.get("/subscribers", response_model=SubscribersListOut)
-def list_subscribers(
-    page: int = Query(1, ge=1),
-    page_size: int = Query(50, ge=1, le=200),
-    db: Session = Depends(get_db),
-    _: str = Depends(verify_token),
-):
-    query = db.query(Subscriber).order_by(Subscriber.created_at.desc())
-    total = query.count()
-    total_hero = db.query(Subscriber).filter(Subscriber.source == "hero").count()
-    pages = (total + page_size - 1) // page_size if total > 0 else 1
-    items = query.offset((page - 1) * page_size).limit(page_size).all()
-    return SubscribersListOut(
-        items=items, total=total, total_hero=total_hero, total_cta=total - total_hero,
-        page=page, page_size=page_size, pages=pages,
-    )
 
 
 @router.get("/users", response_model=UsersListOut)

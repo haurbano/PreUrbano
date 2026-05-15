@@ -38,7 +38,7 @@ backend/
 ├── main.py              # FastAPI app, middlewares, routers
 ├── auth.py              # JWT admin + JWT estudiante
 ├── database.py          # SQLAlchemy engine + SessionLocal (db.sqlite)
-├── models.py            # Subscriber, User, Question  ← solo modelos de negocio
+├── models.py            # User, Question  ← solo modelos de negocio
 ├── schemas.py           # Pydantic schemas
 ├── admin.html           # Panel admin (SPA vanilla JS)
 ├── student.html         # App estudiante (SPA vanilla JS)
@@ -46,8 +46,7 @@ backend/
 │   ├── database.py      # Engine SQLAlchemy apuntando a analytics.sqlite
 │   └── models.py        # ImageLoadError (y futuros eventos de observabilidad)
 ├── routers/
-│   ├── subscribe.py     # POST /api/subscribe
-│   ├── admin.py         # /admin/* (login, subscribers, users)
+│   ├── admin.py         # /admin/* (login, users)
 │   ├── auth.py          # /auth/google/* + /auth/me + /auth/profile
 │   ├── questions.py     # /admin/questions/* (banco de preguntas)
 │   └── logs.py          # POST /api/log/image-error (analytics)
@@ -67,7 +66,6 @@ ANTHROPIC_API_KEY=...   # presente en .env pero ya no se usa activamente
 ```
 
 ## Modelos de DB actuales
-- **Subscriber:** email, source (hero|cta), created_at
 - **User:** google_id, email, name, picture, is_active, document_id, phone, created_at
 - **Question:** subject, correct_option (A|B|C|D), image_path, created_at
 
@@ -82,9 +80,7 @@ El admin sube una imagen (JPG/PNG/WebP, máx 20 MB) que contiene la pregunta com
 ## Rutas API
 | Método | Ruta | Auth | Descripción |
 |---|---|---|---|
-| POST | `/api/subscribe` | — | Registra email |
 | POST | `/admin/login` | — | Login admin → JWT |
-| GET | `/admin/subscribers` | Admin JWT | Lista suscriptores |
 | GET | `/admin/users` | Admin JWT | Lista usuarios Google |
 | GET | `/auth/google/login` | — | Inicia OAuth2 Google |
 | GET | `/auth/google/callback` | — | Callback OAuth2 |
@@ -99,7 +95,6 @@ El admin sube una imagen (JPG/PNG/WebP, máx 20 MB) que contiene la pregunta com
 - `preurbano.com` → sirve `index.html` (static) + proxea `/api/`, `/auth/`, `/app`, `/uploads/` al backend
 - `admin.preurbano.com` → proxea todo a `backend:8000/admin/` (con trailing slash — crítico); `client_max_body_size 25m`
 - `/uploads/` usa `location ^~ /uploads/` para tener prioridad sobre el regex de assets estáticos (`.png`, `.jpg`, etc.)
-- Rate limiting: `/api/subscribe` → 5 req/min por IP
 - **Cache de estáticos:** `.js` y `.css` se cachean con `max-age=1 año, immutable`. Al modificar `student.js`, `student.css`, `admin.css`, `app.js`, etc., hay que incrementar el query param de versión en el HTML que los referencia (ej. `?v=2` → `?v=3`) para que los browsers los recarguen. Lo mismo aplica a `landing.css` / `landing.js` referenciados desde `index.html`.
 
 ## Secretos del servidor (macOS Keychain)
