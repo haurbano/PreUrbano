@@ -7,13 +7,55 @@ function fmtDuration(s) {
 }
 
 let currentModalUser = null;
+let _currentPage = 1;
+let _searchQ = '';
+let _searchDebounceId = null;
 
-export async function loadUsers() {
+function buildPagination(page, pages, total, pageSize) {
+  if (pages <= 1) return '';
+  const start = (page - 1) * pageSize + 1;
+  const end   = Math.min(page * pageSize, total);
+  let btns = `<button class="page-btn" onclick="loadUsers(${page - 1})" ${page === 1 ? 'disabled' : ''}>‹</button>`;
+  for (let p = 1; p <= pages; p++) {
+    if (pages > 7 && Math.abs(p - page) > 2 && p !== 1 && p !== pages) {
+      if (p === 2 || p === pages - 1) btns += `<span class="page-info">…</span>`;
+      continue;
+    }
+    btns += `<button class="page-btn ${p === page ? 'active' : ''}" onclick="loadUsers(${p})">${p}</button>`;
+  }
+  btns += `<button class="page-btn" onclick="loadUsers(${page + 1})" ${page === pages ? 'disabled' : ''}>›</button>`;
+  btns += `<span class="page-info">${start}–${end} de ${total}</span>`;
+  return `<div class="pagination">${btns}</div>`;
+}
+
+export async function loadUsers(page = _currentPage) {
+  _currentPage = page;
   const wrap = document.getElementById('table-users');
-  wrap.innerHTML = '<p style="color:var(--muted);padding:16px">Cargando...</p>';
+  wrap.textContent = '';
+  const loading = document.createElement('p');
+  loading.style.cssText = 'color:var(--muted);padding:16px';
+  loading.textContent = 'Cargando...';
+  wrap.appendChild(loading);
+
+  const inp = document.getElementById('users-search');
+  if (inp && inp.dataset.wired !== '1') {
+    inp.value = _searchQ;
+    inp.dataset.wired = '1';
+    inp.addEventListener('input', e => {
+      clearTimeout(_searchDebounceId);
+      _searchDebounceId = setTimeout(() => {
+        _searchQ = e.target.value.trim();
+        _currentPage = 1;
+        loadUsers(1);
+      }, 300);
+    });
+  }
+
   try {
+    const params = new URLSearchParams({ page: _currentPage });
+    if (_searchQ) params.set('search', _searchQ);
     const [usersRes, studentsRes] = await Promise.all([
-      fetch('/admin/users', { headers: { Authorization: `Bearer ${token()}` } }),
+      fetch(`/admin/users?${params}`, { headers: { Authorization: `Bearer ${token()}` } }),
       fetch('/admin/students', { headers: { Authorization: `Bearer ${token()}` } }),
     ]);
     if (usersRes.status === 401 || studentsRes.status === 401) { logout(); return; }
@@ -26,7 +68,12 @@ export async function loadUsers() {
     document.getElementById('stat-users-active').textContent = users.total_active;
 
     if (!users.items.length) {
-      wrap.innerHTML = '<div class="empty-state">Aún no hay usuarios registrados.</div>';
+      const emptyMsg = _searchQ ? `Sin resultados para "${_searchQ}".` : 'Aún no hay usuarios registrados.';
+      wrap.textContent = '';
+      const empty = document.createElement('div');
+      empty.className = 'empty-state';
+      empty.textContent = emptyMsg;
+      wrap.appendChild(empty);
       return;
     }
 
@@ -57,7 +104,19 @@ export async function loadUsers() {
         </tbody>
       </table>`;
     _renderProToggles();
-  } catch { wrap.innerHTML = '<p style="color:var(--red);padding:16px">Error al cargar datos.</p>'; }
+    const paginationHtml = buildPagination(users.page, users.pages, users.total, users.page_size);
+    if (paginationHtml) {
+      const paginationEl = document.createElement('div');
+      paginationEl.innerHTML = paginationHtml;
+      wrap.appendChild(paginationEl);
+    }
+  } catch {
+    wrap.textContent = '';
+    const err = document.createElement('p');
+    err.style.cssText = 'color:var(--red);padding:16px';
+    err.textContent = 'Error al cargar datos.';
+    wrap.appendChild(err);
+  }
 }
 
 function _renderProToggles() {

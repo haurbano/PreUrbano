@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/static/shared/base.css?v=2" />
-  <link rel="stylesheet" href="/static/admin/admin.css?v=3" />
+  <link rel="stylesheet" href="/static/admin/admin.css?v=4" />
 </head>
 <body>
 
@@ -126,6 +126,9 @@
         <div class="section-header">
           <h2>Usuarios con Google</h2>
           <button class="refresh-btn" onclick="loadUsers()">↻ Actualizar</button>
+        </div>
+        <div class="filter-row">
+          <input type="text" id="users-search" placeholder="Buscar por nombre o email…" />
         </div>
         <div id="table-users"></div>
       </div>
@@ -295,6 +298,6 @@
 
 <div class="toast" id="toast"></div>
 
-<script type="module" src="/static/admin/app.js?v=16"></script>
+<script type="module" src="/static/admin/app.js?v=17"></script>
 </body>
 </html>

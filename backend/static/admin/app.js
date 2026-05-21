@@ -1,5 +1,5 @@
 import { TOKEN_KEY, token, logout, showToast } from './shared.js?v=5';
-import { loadUsers, openUserModal, toggleUser, toggleUserPro, toggleProAccess, closeModal, deleteUser } from './users.js?v=8';
+import { loadUsers, openUserModal, toggleUser, toggleUserPro, toggleProAccess, closeModal, deleteUser } from './users.js?v=9';
 import {
   setFile, updateSaveBtn, handleDragOver, handleDragLeave, handleDrop,
   saveQuestion, loadQuestions, handleQuestionRowClick,

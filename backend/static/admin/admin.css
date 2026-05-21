@@ -189,6 +189,12 @@ tbody tr.clickable { cursor: pointer; }
   font-size: 0.85rem; cursor: pointer; outline: none;
 }
 .filter-row select:focus { border-color: rgba(108,99,255,0.5); }
+.filter-row input[type="text"] {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+  padding: 7px 12px; font-family: 'Inter', sans-serif; font-size: 0.85rem;
+  color: var(--text); outline: none; min-width: 260px;
+}
+.filter-row input[type="text"]:focus { border-color: rgba(108,99,255,0.5); }
 
 .q-thumb {
   width: 56px; height: 42px; object-fit: cover; border-radius: 6px;

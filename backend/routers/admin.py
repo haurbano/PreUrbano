@@ -2,6 +2,7 @@ from pathlib import Path
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
+from sqlalchemy import or_
 from database import get_db
 from models import User, SimulationConfig, SimulationResult, DEFAULT_CONFIG
 from schemas import (
@@ -42,12 +43,16 @@ def login(body: LoginRequest):
 def list_users(
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=200),
+    search: str | None = Query(None),
     db: Session = Depends(get_db),
     _: str = Depends(verify_token),
 ):
     query = db.query(User).filter(User.is_deleted == False)
+    if search and search.strip():
+        term = f"%{search.strip()}%"
+        query = query.filter(or_(User.name.ilike(term), User.email.ilike(term)))
     total = query.count()
-    total_active = db.query(User).filter(User.is_deleted == False, User.is_active == True).count()
+    total_active = query.filter(User.is_active == True).count()
     pages = (total + page_size - 1) // page_size if total > 0 else 1
     items = query.order_by(User.created_at.desc()).offset((page - 1) * page_size).limit(page_size).all()
     return UsersListOut(
