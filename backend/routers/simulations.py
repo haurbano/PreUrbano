@@ -63,11 +63,14 @@ def start_simulation(
     selected = [s for s in SUBJECTS if s in subjects]
     random.shuffle(selected)
 
+    only_pro = bool(body and body.only_pro)
     all_questions = []
     for subject in selected:
         q_filter = db.query(Question).filter(Question.subject == subject)
         if not has_pro:
             q_filter = q_filter.filter(Question.is_pro == False)
+        elif only_pro:
+            q_filter = q_filter.filter(Question.is_pro == True)
         subject_qs = q_filter.all()
 
         groups: dict[int, list] = {}

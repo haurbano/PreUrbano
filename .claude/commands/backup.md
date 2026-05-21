@@ -1,12 +1,13 @@
-Haz un backup de la base de datos y las imágenes del servidor de PreUrbano a la máquina local.
+Haz un backup de las bases de datos y las imágenes del servidor de PreUrbano a la máquina local.
 
 ## Pasos
 
 1. Determina la fecha de hoy en formato `YYYY-MM-DD`.
 
-2. Copia la base de datos del servidor:
+2. Copia las bases de datos del servidor:
 ```bash
 scp haurbano@192.168.1.66:/home/haurbano/preurbano-new/data/db.sqlite "/Users/haurbano/Downloads/Backups/Backup DB Preurbano/preurbano-<FECHA>.sqlite"
+scp haurbano@192.168.1.66:/home/haurbano/preurbano-new/data/analytics.sqlite "/Users/haurbano/Downloads/Backups/Backup DB Preurbano/preurbano-analytics-<FECHA>.sqlite"
 ```
 
 3. Comprime las imágenes en el servidor, cópialas localmente y limpia el temporal:
@@ -16,7 +17,7 @@ scp haurbano@192.168.1.66:/tmp/preurbano-uploads-<FECHA>.tar.gz "/Users/haurbano
 ssh haurbano@192.168.1.66 "rm /tmp/preurbano-uploads-<FECHA>.tar.gz"
 ```
 
-4. Verifica que los dos archivos existen y muestra su tamaño con `ls -lh`.
+4. Verifica que los tres archivos existen y muestra su tamaño con `ls -lh`.
 
 5. Reporta al usuario los paths y tamaños de los archivos creados.
 
@@ -24,4 +25,3 @@ ssh haurbano@192.168.1.66 "rm /tmp/preurbano-uploads-<FECHA>.tar.gz"
 - Carpeta DB: `~/Downloads/Backups/Backup DB Preurbano/`
 - Carpeta imágenes: `~/Downloads/Backups/Backup Uploads Preurbano/`
 - Si alguna de las carpetas de destino no existe, créala antes de copiar.
-- No copies `analytics.sqlite` — ese archivo es observabilidad efímera, no datos de negocio.

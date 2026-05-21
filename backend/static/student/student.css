@@ -449,3 +449,21 @@ sidebar {
   background: #fef2f2; color: #b91c1c;
   font-size: 0.88rem; text-align: center; margin: 16px 0;
 }
+
+/* ── PRO toggle (práctica libre) ── */
+.sim-pro-row { display: flex; justify-content: center; margin-bottom: 20px; }
+.sim-pro-toggle-label { display: flex; align-items: center; gap: 10px; cursor: pointer; user-select: none; }
+.sim-pro-toggle-label input[type="checkbox"] { display: none; }
+.sim-pro-track {
+  position: relative; width: 44px; height: 24px;
+  background: rgba(0,0,0,0.15); border-radius: 100px; transition: background 0.2s;
+  flex-shrink: 0;
+}
+.sim-pro-thumb {
+  position: absolute; top: 3px; left: 3px; width: 18px; height: 18px;
+  background: #fff; border-radius: 50%;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.2); transition: transform 0.2s;
+}
+#sim-only-pro:checked ~ .sim-pro-track { background: rgba(108,99,255,0.85); }
+#sim-only-pro:checked ~ .sim-pro-track .sim-pro-thumb { transform: translateX(20px); }
+.sim-pro-text { font-size: 0.88rem; color: var(--text); font-weight: 500; }

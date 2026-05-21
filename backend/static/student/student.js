@@ -318,6 +318,30 @@ function renderSimConfig(availableSubjects = SUBJECTS) {
       </div>
       <button class="sim-start-btn" onclick="startSim()">Iniciar práctica</button>
     </div>`;
+
+  if (currentUser?.has_pro_access) {
+    const proRow = document.createElement('div');
+    proRow.className = 'sim-pro-row';
+    const lbl = document.createElement('label');
+    lbl.className = 'sim-pro-toggle-label';
+    const chk = document.createElement('input');
+    chk.type = 'checkbox';
+    chk.id = 'sim-only-pro';
+    const track = document.createElement('span');
+    track.className = 'sim-pro-track';
+    const thumb = document.createElement('span');
+    thumb.className = 'sim-pro-thumb';
+    track.appendChild(thumb);
+    const txt = document.createElement('span');
+    txt.className = 'sim-pro-text';
+    txt.textContent = 'Solo preguntas PRO';
+    lbl.appendChild(chk);
+    lbl.appendChild(track);
+    lbl.appendChild(txt);
+    proRow.appendChild(lbl);
+    const totalRow = c.querySelector('.sim-total-row');
+    c.querySelector('.sim-config-screen').insertBefore(proRow, totalRow);
+  }
 }
 
 async function startSim() {
@@ -331,6 +355,7 @@ async function startSim() {
   }
 
   const totalQuestions = parseInt(document.getElementById('sim-total-select').value, 10);
+  const onlyPro = document.getElementById('sim-only-pro')?.checked === true;
 
   const c = document.getElementById('sim-container');
   c.innerHTML = '<div class="sim-empty">Cargando preguntas...</div>';
@@ -339,7 +364,7 @@ async function startSim() {
     const res = await fetch('/api/simulation/start', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ subjects: selectedSubjects, total_questions: totalQuestions }),
+      body: JSON.stringify({ subjects: selectedSubjects, total_questions: totalQuestions, only_pro: onlyPro }),
     });
     if (res.status === 401) { logout(); return; }
     const data = await res.json();

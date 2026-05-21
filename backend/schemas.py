@@ -158,6 +158,7 @@ class SimulationAnswerIn(BaseModel):
 class SimulationStartIn(BaseModel):
     subjects: list[str] | None = None
     total_questions: int | None = None
+    only_pro: bool = False
 
 
 class SimulationSubmitIn(BaseModel):
